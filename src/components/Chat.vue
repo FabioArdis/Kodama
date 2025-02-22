@@ -1,5 +1,5 @@
 <script>
-import ollama from "ollama";
+import ollama from "ollama/browser";
 
 export default {
   data() {
@@ -88,7 +88,7 @@ export default {
       >
         <div class="flex justify-between items-center">
           <span>AI Chat</span>
-          <button @click="toggleChat" class="text-red-700">&times;</button>
+          <button @click="toggleChat" class="text-neutral-300">&times;</button>
         </div>
         <div class="chat-container bg-neutral-800 rounded-xl p-4 my-4">
             <div class="messages-container mb-4">

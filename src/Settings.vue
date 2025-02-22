@@ -1,5 +1,5 @@
 <script>
-import ollama from 'ollama';
+import ollama from 'ollama/browser';
 export default {
   data() {
     return {
