@@ -58,6 +58,15 @@ export default {
             <span class="ml-2">Search</span>
           </div>
           <div class="border-t border-neutral-800 my-1.5"></div>
+          <div class="flex h-8 my-4 mx-3">
+            <input
+                v-model="searchInput"
+                type="text"
+                placeholder="Search..."
+                class="p-2 bg-neutral-700 text-white rounded-md w-full"
+            />
+            <button @click="search" class="mx-2 bg-neutral-900 text-white rounded-md"><i :class="'fas ' + this.menus.search.icon"></i></button>
+          </div>
         </div>
         <div v-if="activeMenu === 'vcs'">
           <div class="p-1 flex items-center">

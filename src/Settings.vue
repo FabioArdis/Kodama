@@ -50,23 +50,23 @@ export default {
 </script>
 
 <template>
-  <div class="flex flex-col h-screen bg-neutral-800 text-white">
-    <h1 class="text-2xl font-bold mb-4 mx-2 my-2">Settings</h1>
+  <div class="flex flex-col h-screen bg-neutral-900 text-white">
+    <h1 class="text-2xl font-bold mb-4 mx-6 my-4">Settings</h1>
 
     <!-- Ollama Status -->
     <div class="setting-item bg-neutral-900 mb-4 rounded-xl p-2 mx-2">
       <label class="block mx-2">Ollama Status:</label>
-      <p class="mx-2">{{ ollamaStatus }}</p>
+      <p class="mx-2">{{ ollamaStatus }}</p> <br>
 
       <div class="setting-item mb-4 mx-2">
         <label for="model" class="block">Select Model:</label>
-        <select id="model" v-model="selectedModel" class="outline outline-neutral-700 mt-2 p-2 text-black rounded-md">
+        <select id="model" v-model="selectedModel" class="outline outline-neutral-700 mt-2 p-2 text-white rounded-md">
           <option v-for="model in availableModels" :key="model" :value="model">{{ model }}</option>
         </select>
       </div>
     </div>
 
-    <div class="mt-4 mx-2">
+    <div class="mt-4 mx-6">
       <button @click="saveSettings" class="p-2 bg-blue-600 text-white rounded-md">Save Settings</button>
     </div>
   </div>

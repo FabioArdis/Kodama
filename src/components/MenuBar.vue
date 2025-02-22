@@ -1,15 +1,14 @@
 <script>
-import { invoke } from "@tauri-apps/api/core";
 import { exit } from "@tauri-apps/plugin-process"
 
 export default {
+  emits: ["newFile", "openSettings"],
   methods: {
-    async openSettingsWindow() {
-      try {
-        await invoke('create_window', { label: 'Settings'});
-      } catch (error) {
-        console.error('Error creating settings window:', error);
-      }
+    newFile() {
+      this.$emit("newFile");
+    },
+    openSettings() {
+      this.$emit("openSettings");
     },
     async exitApp() {
       try {
@@ -34,10 +33,10 @@ export default {
             class="absolute left-0 min-w-[150px] hidden group-hover:block outline-2 outline-neutral-600 bg-neutral-900 shadow-lg rounded-md z-50"
         >
           <ul class="p-2">
-            <li class="px-3 py-2 hover:bg-neutral-800 cursor-pointer rounded">New File</li>
+            <li @click="newFile" class="px-3 py-2 hover:bg-neutral-800 cursor-pointer rounded">New File</li>
             <li class="px-3 py-2 hover:bg-neutral-800 cursor-pointer rounded">Open File...</li>
             <li class="border-t border-neutral-800 my-1"></li>
-            <li @click="openSettingsWindow" class="px-3 py-2 hover:bg-neutral-800 cursor-pointer rounded">Settings</li>
+            <li @click="openSettings" class="px-3 py-2 hover:bg-neutral-800 cursor-pointer rounded">Settings</li>
             <li class="border-t border-neutral-800 my-1"></li>
             <li class="px-3 py-2 hover:bg-neutral-800 cursor-pointer rounded">Save</li>
             <li class="border-t border-neutral-800 my-1"></li>
