@@ -43,9 +43,9 @@ export default {
 <template>
   <div class="flex flex-col h-screen bg-neutral-800 text-white">
     <MenuBar @newFile="handleNewFile" @openSettings="handleOpenSettings" />
-    <div class="flex flex-1 overflow-hidden">
+    <div class="flex flex-1 overflow-hidden relative">
       <Sidebar ref="sidebar" />
-      <Editor ref="editor"  :class="{ 'ml-80': sidebarExpanded, 'ml-4': !sidebarExpanded }" />
+      <Editor ref="editor" :class="{ 'ml-80': sidebarExpanded, 'ml-4': !sidebarExpanded }" class="flex-grow" />
       <Chat />
     </div>
     <!-- Status bar, will probably become a component later on -->

@@ -22,7 +22,7 @@ export default {
 </script>
 
 <template>
-  <header class="bg-neutral-800 text-white p-2 flex items-center select-none relative z-50">
+  <header class="bg-neutral-800 text-white p-2 flex items-center select-none relative">
 
     <div class="px-4 font-semibold text-lg">コーダマ</div>
 
