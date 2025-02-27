@@ -59,6 +59,13 @@ export default {
     window.removeEventListener("mouseup", this.handleMouseUp);
   },
   methods: {
+    applyHighlighting() {
+      this.$nextTick(() => {
+        document.querySelectorAll('pre code').forEach((block) => {
+          hljs.highlightElement(block);
+        });
+      });
+    },
     scrollToBottom() {
       this.$nextTick(() => {
         const container = this.$el.querySelector(".messages-container");
@@ -96,6 +103,7 @@ export default {
       if (this.chatOpen) {
         this.$nextTick(() => {
           this.addCodeBlockActions();
+          this.applyHighlighting();
         });
       }
     },
@@ -167,6 +175,7 @@ export default {
         const timeTaken = (((Date.now() - startTime) / 1000).toFixed(2));
         const finalContent = this.renderMarkdown(messageContent);
         this.updateMessage(finalContent + `<br><small class="text-gray-400">took ${timeTaken} seconds</small>`);
+        this.applyHighlighting();
         setTimeout(() => {
           this.addCodeBlockActions();
         }, 500);
@@ -256,6 +265,9 @@ export default {
       if (savedHistory) {
         try {
           this.messages = JSON.parse(savedHistory);
+          this.$nextTick(() => {
+            this.applyHighlighting();
+          });
         } catch (error) {
           this.messages = [];
         }
@@ -295,7 +307,7 @@ export default {
           :class="{ 'bg-blue-500': isResizing, 'bg-neutral-600': !isResizing }"
         ></div>
         <div class="flex justify-between items-center p-4">
-          <span class="text-lg font-semibold">AI Chat</span>
+          <span class="text-lg font-semibold">Chat</span>
           <div>
             <!-- Just for debugging
             <button @click="addCodeBlockActions(true)" class="text-neutral-300 mr-3 text-sm hover:text-white">
@@ -310,48 +322,75 @@ export default {
         </div>
         <div class="chat-container bg-neutral-800 rounded-xl p-4 mx-4 mb-4 flex-grow overflow-hidden flex flex-col">
           <div class="messages-container flex-grow overflow-y-auto">
-            <transition-group name="message-fade" tag="div">
-              <div v-for="message in messages" :key="message.id" class="message-container mb-4">
-                <div v-if="message.sender === 'Error'" class="ai-message bg-red-800 p-3 rounded-lg shadow-lg">
-                  <p v-html="message.content"></p>
-                  <small v-if="message.timestamp" class="text-gray-400 block mt-1">
-                    {{ formatTime(message.timestamp) }}
-                  </small>
-                </div>
-                <div v-else-if="message.sender === 'AI'" class="ai-message bg-neutral-900 p-3 rounded-lg shadow-lg">
-                  <div class="prose prose-invert prose-sm max-w-none" v-html="message.content"></div>
-                  <div
-                    v-for="block in codeBlocks.filter(b => b.messageIndex === message.id)"
-                    :key="block.id"
-                    class="mt-2"
-                  >
-                    <div class="code-actions flex gap-2 mt-2">
-                      <button
-                        @click="applyCode(block.content)"
-                        class="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+            <transition name="fade">
+              <template v-if="messages.length > 0">
+                <transition-group name="message-fade" tag="div">
+                  <div v-for="message in messages" :key="message.id" class="message-container mb-4">
+                    <div v-if="message.sender === 'Error'" class="ai-message bg-red-800 p-3 rounded-lg shadow-lg">
+                      <p v-html="message.content"></p>
+                      <small v-if="message.timestamp" class="text-gray-400 block mt-1">
+                        {{ formatTime(message.timestamp) }}
+                      </small>
+                    </div>
+                    <div v-else-if="message.sender === 'AI'" class="ai-message bg-neutral-900 p-3 rounded-lg shadow-lg">
+                      <div class="prose prose-invert prose-sm max-w-none" v-html="message.content"></div>
+                      <div
+                        v-for="block in codeBlocks.filter(b => b.messageIndex === message.id)"
+                        :key="block.id"
+                        class="mt-2"
                       >
-                        Apply to Editor
-                      </button>
-                      <button
-                        @click="copyCode(block.content)"
-                        class="px-2 py-1 text-xs bg-gray-600 hover:bg-gray-700 rounded transition-colors"
-                      >
-                        Copy
-                      </button>
+                        <div class="code-actions flex gap-2 mt-2">
+                          <button
+                            @click="applyCode(block.content)"
+                            class="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                          >
+                            Apply to Editor
+                          </button>
+                          <button
+                            @click="copyCode(block.content)"
+                            class="px-2 py-1 text-xs bg-gray-600 hover:bg-gray-700 rounded transition-colors"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      </div>
+                      <small v-if="message.timestamp" class="text-gray-400 block mt-1">
+                        {{ formatTime(message.timestamp) }}
+                      </small>
+                    </div>
+                    <div v-else class="user-message bg-neutral-700 p-3 rounded-lg text-white">
+                      <p>{{ message.content }}</p>
+                      <small v-if="message.timestamp" class="text-gray-400 block mt-1 text-right">
+                        {{ formatTime(message.timestamp) }}
+                      </small>
                     </div>
                   </div>
-                  <small v-if="message.timestamp" class="text-gray-400 block mt-1">
-                    {{ formatTime(message.timestamp) }}
-                  </small>
+                </transition-group>
+              </template>
+              <template v-else>
+                <div class="empty-chat flex flex-col items-center text-center p-6 text-neutral-200">
+                  <h2 class="text-xl font-bold text-neutral-100">Don't be shy and start chatting!</h2>
+                  <p class="mt-2 text-base">Here are some examples to get you started:</p>
+
+                  <ul class="mt-4 space-y-2 text-sm text-neutral-300">
+                    <li class="flex items-center gap-2">
+                      <span class="text-neutral-700">➤</span> "How do I implement a sorting algorithm in JavaScript?"
+                    </li>
+                    <li class="flex items-center gap-2">
+                      <span class="text-neutral-700">➤</span> "Can you show me how to use Vue.js computed properties?"
+                    </li>
+                    <li class="flex items-center gap-2">
+                      <span class="text-neutral-700">➤</span> "What are some good practices for responsive design?"
+                    </li>
+                  </ul>
+
+                  <p class="mt-6 text-sm text-neutral-300">
+                    Select text or code in your editor and use the 
+                    <span class="font-medium text-blue-500">"Apply to Editor"</span> button to immediately see them in action.
+                  </p>
                 </div>
-                <div v-else class="user-message bg-neutral-700 p-3 rounded-lg text-white">
-                  <p>{{ message.content }}</p>
-                  <small v-if="message.timestamp" class="text-gray-400 block mt-1 text-right">
-                    {{ formatTime(message.timestamp) }}
-                  </small>
-                </div>
-              </div>
-            </transition-group>
+              </template>
+            </transition>
           </div>
           <div class="input-container mt-4">
             <textarea
@@ -448,16 +487,58 @@ pre code {
   background-color: #404040;
 }
 
-.messages-container::-webkit-scrollbar {
-  width: 6px;
+.messages-container {
+  padding-right: 8px;
 }
 
-.messages-container::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
+.messages-container::-webkit-scrollbar,
+pre::-webkit-scrollbar,
+.hljs::-webkit-scrollbar,
+.ai-message pre::-webkit-scrollbar,
+.ai-message .hljs::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
 }
 
-.messages-container::-webkit-scrollbar-track {
-  background: transparent;
+.messages-container::-webkit-scrollbar-thumb,
+pre::-webkit-scrollbar-thumb,
+.hljs::-webkit-scrollbar-thumb,
+.ai-message pre::-webkit-scrollbar-thumb,
+.ai-message .hljs::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-radius: 10px !important;
+}
+
+.messages-container::-webkit-scrollbar-thumb:hover,
+pre::-webkit-scrollbar-thumb:hover,
+.hljs::-webkit-scrollbar-thumb:hover,
+.ai-message pre::-webkit-scrollbar-thumb:hover,
+.ai-message .hljs::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+.messages-container::-webkit-scrollbar-track,
+pre::-webkit-scrollbar-track,
+.hljs::-webkit-scrollbar-track,
+.ai-message pre::-webkit-scrollbar-track,
+.ai-message .hljs::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+/* I use Firefox for testing, so it's needed. */
+.messages-container,
+pre,
+.hljs,
+.ai-message pre,
+.ai-message .hljs {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent !important;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
 }
 </style>

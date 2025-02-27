@@ -41,7 +41,8 @@ export default {
       try {
         const success = await this.$refs.editor.replaceSelectedText(data.code);
         if (success) {
-          this.$refs.chat.scrollToBottom();
+          // Might reuse this later.
+          //this.$refs.chat.scrollToBottom();
         }
       } catch (error) {
         console.error('Code application failed:', error);
