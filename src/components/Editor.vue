@@ -24,6 +24,7 @@ export default {
         tabSize: 2,
         minimap: { enabled: true },
         scrollBeyondLastLine: false,
+        fixedOverflowWidgets: true,
       },
       aiContextMenu: {
         show: false,
@@ -412,4 +413,5 @@ export default {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
 </style>
