@@ -3,13 +3,18 @@ import Sidebar from "./components/Sidebar.vue";
 import Editor from "./components/Editor.vue";
 import Chat from "./components/Chat.vue";
 import MenuBar from "./components/MenuBar.vue";
+
 import { getVersion } from "@tauri-apps/api/app";
+
+import ollama from 'ollama/browser';
 
 export default {
   components: { MenuBar, Sidebar, Editor, Chat },
   data() {
     return {
       appVersion: "Loading...",
+      ollamaStatus: "checking",
+      currentFile: null,
     };
   },
   async mounted() {
@@ -21,6 +26,16 @@ export default {
       console.error("Error fetching app version:", error);
       this.appVersion = "Unknown";
     }
+
+    this.checkOllamaStatus();
+    this.ollamaStatusInterval = setInterval(() => {
+      this.checkOllamaStatus();
+    }, 30000);
+  },
+  beforeUnmount() {
+    if (this.ollamaStatusInterval) {
+      clearInterval(this.ollamaStatusInterval);
+    }
   },
   computed: {
     sidebarExpanded() {
@@ -31,6 +46,27 @@ export default {
     },
   },
   methods: {
+    handleOpenProject(projectPath) {
+      this.$refs.sidebar.handleProjectOpened(projectPath);
+    },
+    handleProjectOpened(project) {
+      console.log(`Project opened: ${project.name}`);
+    },
+    handleOpenFile(file) {
+      console.log(`Opening file: ${file.name}`)
+      this.currentFile = file;
+      this.$refs.editor.openFile(file);
+    },
+    async checkOllamaStatus() {
+      try {
+        this.ollamaStatus = "checking";
+        const response = await ollama.list();
+        this.ollamaStatus = response ? "online" : "offline";
+      } catch (error) {
+        console.error("Ollama status check failed:", error);
+        this.ollamaStatus = "offline";
+      }
+    },
     handleNewFile() {
       this.$refs.editor.addTab();
     },
@@ -55,9 +91,9 @@ export default {
 
 <template>
   <div class="flex flex-col h-screen bg-neutral-800 text-white">
-    <MenuBar @newFile="handleNewFile" @openSettings="handleOpenSettings" />
+    <MenuBar @newFile="handleNewFile" @openSettings="handleOpenSettings" @openProject="handleOpenProject" />
     <div class="flex flex-1 overflow-hidden relative">
-      <Sidebar ref="sidebar" />
+      <Sidebar ref="sidebar" @openFile="handleOpenFile" />
       <Editor 
         ref="editor" 
         :class="{ 'ml-80': sidebarExpanded, 'ml-4': !sidebarExpanded }" 
@@ -68,8 +104,23 @@ export default {
     <!-- Status bar, will probably become a component later on -->
     <div class="border-t border-neutral-900 my-2"></div>
     <div class="bg-neutral-800 text-gray-400 p-1 text-xs flex items-center justify-between select-none relative mx-4 bottom-1">
-      <span>Kōdama v{{appVersion}}</span>
-      <span>Model: {{selectedModel}}</span>
+      <div class="flex items-center space-x-2">
+        <span>Kōdama v{{appVersion}}</span>
+      </div>
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center">
+          <div 
+            :class="{
+              'w-2 h-2 rounded-full mr-2': true,
+              'bg-green-500': ollamaStatus === 'online',
+              'bg-red-500': ollamaStatus === 'offline',
+              'bg-yellow-500 animate-pulse': ollamaStatus === 'checking'
+            }"
+          ></div>
+          <span>Ollama - {{ ollamaStatus }}</span>
+        </div>
+        <span>Model: {{selectedModel}}</span>
+      </div>
     </div>
   </div>
 </template>

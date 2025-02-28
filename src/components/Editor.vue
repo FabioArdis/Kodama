@@ -2,6 +2,7 @@
 import { markRaw } from 'vue';
 import Settings from "../Settings.vue";
 import { VueMonacoEditor } from "@guolao/vue-monaco-editor";
+import { readTextFile } from '@tauri-apps/plugin-fs';
 
 export default {
   components: { Settings, VueMonacoEditor },
@@ -13,11 +14,9 @@ export default {
   },
   data() {
     return {
-      tabs: [
-        { id: 1, name: "untitled", content: "", type: "editor", language: "javascript" }
-      ],
-      activeTab: 1,
-      nextTabId: 2,
+      tabs: [],
+      activeTab: 0,
+      nextTabId: 1,
       editorOptions: {
         theme: 'vs-dark',
         automaticLayout: true,
@@ -39,16 +38,17 @@ export default {
           { id: 'debug', label: 'Debug Issues' }
         ]
       },
-      selectionActive: false
+      selectionActive: false,
+      showWelcomeScreen: true
     };
   },
   computed: {
     activeTabData() {
-      return this.tabs.find(tab => tab.id === this.activeTab) || this.tabs[0];
+      return this.tabs.find(tab => tab.id === this.activeTab) || null;
     },
     activeTabContent: {
       get() {
-        return this.activeTabData.content;
+        return this.activeTabData?.content || "";
       },
       set(value) {
         const activeTabIndex = this.tabs.findIndex(tab => tab.id === this.activeTab);
@@ -58,10 +58,43 @@ export default {
       }
     },
     activeTabLanguage() {
-      return this.activeTabData.language || 'javascript';
+      return this.activeTabData?.language || 'javascript';
     }
   },
   methods: {
+    async openFile(file) {
+      try{
+        const content = await readTextFile(file.path);
+
+        const language = this.detectLanguage(file.name);
+
+        const existingTab = this.tabs.find(tab => tab.name === file.name);
+
+        if (existingTab) {
+          const tabIndex = this.tabs.findIndex(tab => tab.id === existingTab.id);
+          this.tabs[tabIndex].content = content;
+          this.activeTab = existingTab.id;
+        } else {
+          this.tabs.push({
+            id: this.nextTabId,
+            name: file.name,
+            content: content,
+            type: "editor",
+            language: language,
+            path: file.path
+          });
+
+          this.activeTab = this.nextTabId;
+          this.nextTabId++;
+        }
+        this.showWelcomeScreen = false;
+        return true;
+      } catch (error) {
+        console.error("Error opening file:", error);
+        return false;
+      }
+    },
+
     addTab(name = "untitled", language = "javascript") {
       const tabName = `${name}-${this.nextTabId}`;
       
@@ -79,12 +112,14 @@ export default {
 
       this.activeTab = this.nextTabId;
       this.nextTabId++;
+      this.showWelcomeScreen = false;
     },
     
     openTab(name, type = "editor", language = "javascript") {
       const existingTab = this.tabs.find(tab => tab.name === name);
       if (existingTab) {
         this.activeTab = existingTab.id;
+        this.showWelcomeScreen = false;
         return;
       }
       
@@ -102,12 +137,14 @@ export default {
 
       this.activeTab = this.nextTabId;
       this.nextTabId++;
+      this.showWelcomeScreen = false;
     },
     
     closeTab(id) {
       this.tabs = this.tabs.filter(tab => tab.id !== id);
       if (this.tabs.length === 0) {
-        this.addTab();
+        this.showWelcomeScreen = true;
+        this.activeTab = null;
       } else if (this.activeTab === id) {
         this.activeTab = this.tabs[this.tabs.length - 1].id;
       }
@@ -141,6 +178,7 @@ export default {
     },
     
     handleEditorMount(editor) {
+      console.log("Editor mounted:", editor);
       this.editor = markRaw(editor);
       
       editor.onDidChangeCursorSelection((e) => {
@@ -219,14 +257,25 @@ export default {
     },
     
     async replaceSelectedText(newCode) {
+      // Wait for editor to be available. I have yet to find out why this is needed for Tauri.
+      let attempts = 0;
+      while (!this.editor && attempts < 10) {
+        console.log("Waiting for editor to initialize...");
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+      }
+
       if (!this.editor) {
-        console.error("Editor instance not available");
+        console.error("Editor instance not available after waiting");
         return false;
       }
 
-      await new Promise(resolve => setTimeout(resolve, 0));
-
       const model = this.editor.getModel();
+      if (!model) {
+        console.error("Editor model not available");
+        return false;
+      }
+
       const currentValue = model.getValue();
       const selection = this.editor.getSelection();
       let newValue, insertOffset;
@@ -273,14 +322,34 @@ export default {
         <span @click="activeTab = tab.id">{{ tab.name }}</span>
         <span class="ml-2 cursor-pointer" @click.stop="closeTab(tab.id)">&times;</span>
       </div>
-      <button @click="addTab" class="ml-2 text-xs px-3 py-1 rounded-lg bg-neutral-800 hover:bg-neutral-700">
+      <button @click="addTab()" class="ml-2 text-xs px-3 py-1 rounded-lg bg-neutral-800 hover:bg-neutral-700">
         <span>+</span>
       </button>
     </div>
     <div class="border-t border-neutral-800"></div>
 
+    <!-- Welcome Screen -->
+    <div v-if="showWelcomeScreen" class="w-full h-full flex flex-col items-center justify-center bg-neutral-900 text-neutral-300">
+      <div class="text-4xl font-light mb-6">Welcome to コーダマ - <i>Kōdama</i></div>
+      <div class="flex flex-col gap-4 w-64">
+        <button @click="addTab()" class="flex items-center justify-center gap-3 py-3 px-4 bg-neutral-800 hover:bg-neutral-700 rounded-xl transition-colors">
+          <span class="text-xl"><i class="fas fa-plus mr-2"></i></span>
+          <span>New File</span>
+        </button>
+        <button @click="$emit('open-file-dialog')" class="flex items-center justify-center gap-3 py-3 px-4 bg-neutral-800 hover:bg-neutral-700 rounded-xl transition-colors">
+          <span class="text-xl"><i class="fas fa-file mr-2"></i></span>
+          <span>Open File</span>
+        </button>
+      </div>
+      <div class="mt-8 px-6 py-4 bg-neutral-800 rounded-xl max-w-md">
+        <div class="text-lg font-medium mb-2">Recent Files</div>
+        <div class="text-sm text-neutral-400">No recent files</div>
+        <!-- Will add logic to display recent files at a later time -->
+      </div>
+    </div>
+
     <!-- Editor -->
-    <div class="w-full h-full overflow-hidden">
+    <div v-else class="w-full h-full overflow-hidden">
       <div v-for="tab in tabs" v-show="activeTab === tab.id" :key="tab.id" class="h-full">
         <vue-monaco-editor
           v-if="tab.type === 'editor'"

@@ -298,7 +298,7 @@ export default {
     <transition name="slide">
       <div
         v-if="chatOpen"
-        class="fixed top-0 right-0 h-full bg-neutral-700 rounded-l-lg shadow-lg overflow-hidden flex flex-col z-10"
+        class="fixed top-0 right-0 h-[calc(100%-2rem)] bg-neutral-700 rounded-l-lg shadow-lg overflow-hidden flex flex-col z-10"
         :style="{ width: `${chatWidth}px` }"
       >
         <div
@@ -373,14 +373,14 @@ export default {
                   <p class="mt-2 text-base">Here are some examples to get you started:</p>
 
                   <ul class="mt-4 space-y-2 text-sm text-neutral-300">
-                    <li class="flex items-center gap-2">
-                      <span class="text-neutral-700">➤</span> "How do I implement a sorting algorithm in JavaScript?"
+                    <li class="flex items-center gap-2 p-2 outline-1 rounded-md">
+                      <span class="text-neutral-300">➤</span> "How do I implement a sorting algorithm in JavaScript?"
                     </li>
-                    <li class="flex items-center gap-2">
-                      <span class="text-neutral-700">➤</span> "Can you show me how to use Vue.js computed properties?"
+                    <li class="flex items-center gap-2 p-2 outline-1 rounded-md">
+                      <span class="text-neutral-300">➤</span> "Can you show me how to use Vue.js computed properties?"
                     </li>
-                    <li class="flex items-center gap-2">
-                      <span class="text-neutral-700">➤</span> "What are some good practices for responsive design?"
+                    <li class="flex items-center gap-2 p-2 outline-1 rounded-md">
+                      <span class="text-neutral-300">➤</span> "What are some good practices for responsive design?"
                     </li>
                   </ul>
 

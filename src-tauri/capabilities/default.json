@@ -8,6 +8,10 @@
   "permissions": [
     "core:default",
     "opener:default",
-    "process:default"
+    "process:default",
+    "dialog:default",
+    "fs:default",
+    "fs:allow-appconfig-write",
+    "fs:allow-write-text-file"
   ]
 }

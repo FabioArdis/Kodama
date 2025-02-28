@@ -1,8 +1,9 @@
 <script>
-import { exit } from "@tauri-apps/plugin-process"
+import { exit } from "@tauri-apps/plugin-process";
+import { open } from "@tauri-apps/plugin-dialog";
 
 export default {
-  emits: ["newFile", "openSettings"],
+  emits: ["newFile", "openSettings", "openProject"],
   methods: {
     newFile() {
       this.$emit("newFile");
@@ -15,6 +16,21 @@ export default {
         await exit(0);
       } catch (error) {
         console.error("Error closing Kōdama:", error);
+      }
+    },
+    async openProject() {
+      try {
+        const selected = await open({
+          directory: true,
+          multiple: false,
+          title: 'Select Project Folder'
+        });
+
+        if (selected) {
+          this.$emit("openProject", selected);
+        }
+      } catch (error) {
+        console.error("Error opening project:", error);
       }
     }
   }
@@ -35,6 +51,8 @@ export default {
           <ul class="p-2">
             <li @click="newFile" class="px-3 py-2 hover:bg-neutral-800 cursor-pointer rounded">New File</li>
             <li class="px-3 py-2 hover:bg-neutral-800 cursor-pointer rounded">Open File...</li>
+            <li class="border-t border-neutral-800 my-1"></li>
+            <li @click="openProject" class="px-3 py-2 hover:bg-neutral-800 cursor-pointer rounded">Open Project...</li>
             <li class="border-t border-neutral-800 my-1"></li>
             <li @click="openSettings" class="px-3 py-2 hover:bg-neutral-800 cursor-pointer rounded">Settings</li>
             <li class="border-t border-neutral-800 my-1"></li>
