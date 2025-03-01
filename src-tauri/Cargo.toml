@@ -25,4 +25,8 @@ serde_json = "1"
 tauri-plugin-process = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
+regex = "1.11.1"
+walkdir = "2.5.0"
+ignore = "0.4.23"
+rayon = "1.10.0"
 

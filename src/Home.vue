@@ -1,5 +1,5 @@
 <script>
-import Sidebar from "./components/Sidebar.vue";
+import SidebarRoot from "./components/sidebar/SidebarRoot.vue";
 import Editor from "./components/Editor.vue";
 import Chat from "./components/Chat.vue";
 import MenuBar from "./components/MenuBar.vue";
@@ -9,12 +9,13 @@ import { getVersion } from "@tauri-apps/api/app";
 import ollama from 'ollama/browser';
 
 export default {
-  components: { MenuBar, Sidebar, Editor, Chat },
+  components: { MenuBar, SidebarRoot, Editor, Chat },
   data() {
     return {
       appVersion: "Loading...",
       ollamaStatus: "checking",
       currentFile: null,
+      sidebarWidth: 0,
     };
   },
   async mounted() {
@@ -44,6 +45,9 @@ export default {
     selectedModel() {
       return localStorage.getItem("selectedModel") || "defaultModel";
     },
+    editorMargin() {
+      return this.sidebarExpanded ? `${this.sidebarWidth + 16}px` : '16px';
+    }
   },
   methods: {
     handleOpenProject(projectPath) {
@@ -54,6 +58,7 @@ export default {
     },
     handleOpenFile(file) {
       console.log(`Opening file: ${file.name}`)
+      console.log(`file.path in Home.vue: ${file.path}`)
       this.currentFile = file;
       this.$refs.editor.openFile(file);
     },
@@ -84,6 +89,9 @@ export default {
         console.error('Code application failed:', error);
         alert('Failed to apply code: ' + error.message);
       }
+    },
+    handleSidebarWidthChange(width) {
+      this.sidebarWidth = width;
     }
   }
 };
@@ -93,11 +101,15 @@ export default {
   <div class="flex flex-col h-screen bg-neutral-800 text-white">
     <MenuBar @newFile="handleNewFile" @openSettings="handleOpenSettings" @openProject="handleOpenProject" />
     <div class="flex flex-1 overflow-hidden relative">
-      <Sidebar ref="sidebar" @openFile="handleOpenFile" />
+      <SidebarRoot 
+        ref="sidebar" 
+        @openFile="handleOpenFile" 
+        @widthChanged="handleSidebarWidthChange" 
+      />
       <Editor 
         ref="editor" 
-        :class="{ 'ml-80': sidebarExpanded, 'ml-4': !sidebarExpanded }" 
-        class="flex-grow" 
+        :style="{ marginLeft: editorMargin }" 
+        class="flex-grow transition-all duration-100" 
       />
       <Chat ref="chat" @applyCode="handleApplyCode" />
     </div>

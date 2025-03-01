@@ -63,8 +63,18 @@ export default {
     }
   },
   methods: {
+    handleTabMouseDown(event, tabId) {
+      // If the use is pressing the middle mouse button
+      if (event.button === 1) {
+        // Prevent default behavior (like auto-scroll)
+        event.preventDefault();
+        // Close the tab
+        this.closeTab(tabId);
+      }
+    },
     async openFile(file) {
       try{
+        console.info("file.path", file.path);
         const content = await readTextFile(file.path);
 
         const language = this.detectLanguage(file.name);
@@ -319,7 +329,8 @@ export default {
   <main class="flex-1 relative w-full h-full overflow-hidden flex flex-col rounded-4xl">
     <div class="bg-neutral-900 p-2 flex items-center h-12">
       <div v-for="tab in tabs" :key="tab.id" class="mx-1 text-xs px-4 py-2 cursor-pointer" 
-           :class="{ 'rounded-xl outline outline-neutral-700': activeTab === tab.id }">
+           :class="{ 'rounded-xl outline outline-neutral-700': activeTab === tab.id }"
+           @mousedown="handleTabMouseDown($event, tab.id)">
         <span @click="activeTab = tab.id">{{ tab.name }}</span>
         <span class="ml-2 cursor-pointer" @click.stop="closeTab(tab.id)">&times;</span>
       </div>

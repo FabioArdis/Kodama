@@ -12,6 +12,22 @@
     "dialog:default",
     "fs:default",
     "fs:allow-appconfig-write",
-    "fs:allow-write-text-file"
+    "fs:allow-write-text-file",
+    {
+      "identifier" : "fs:read-all",
+      "allow": [
+        {
+          "path": "**"
+        }
+      ]
+    },
+    {
+      "identifier" : "fs:write-all",
+      "allow": [
+        {
+          "path": "**"
+        }
+      ]
+    }
   ]
 }

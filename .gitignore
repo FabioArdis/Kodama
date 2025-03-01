@@ -44,3 +44,9 @@ target
 
 # lockfiles, as a lib we don't need to lock
 yarn.lock
+
+# Kodama configs
+.kodama/
+
+# VSCode configs
+.vscode/
