@@ -23,7 +23,7 @@ export default {
     <div v-for="file in files" :key="file.path">
       <div
         @click="openFile(file)"
-        class="px-2 py-1 hover:bg-neutral-800 rounded cursor-pointer flex items-center select-none"
+        class="px-2 py-1 hover:bg-primary rounded cursor-pointer flex items-center select-none"
       >
         <i :class="`fas ${getFileIcon(file)} mr-2`"></i>
         <span class="truncate text-xs">{{ file.name }}</span>

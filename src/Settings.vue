@@ -1,7 +1,9 @@
 <script>
 import ollama from 'ollama/browser';
+import ThemeSelector from './components/ThemeSelector.vue';
 
 export default {
+  components: { ThemeSelector },
   data() {
     return {
       ollamaStatus: {
@@ -91,7 +93,7 @@ export default {
     },
     showToast(message) {
       const toast = document.createElement("div");
-      toast.className = "fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg";
+      toast.className = "fixed bottom-4 right-4 bg-green-500 text-text-primary px-4 py-2 rounded-md shadow-lg";
       toast.innerText = message;
       document.body.appendChild(toast);
 
@@ -105,11 +107,11 @@ export default {
 </script>
 
 <template>
-  <div class="flex flex-col h-screen bg-neutral-900 text-white p-6">
+  <div class="flex flex-col h-screen bg-secondary text-text-primary p-6">
     <h1 class="text-2xl font-bold mb-6">Settings</h1>
     
     <!-- Ollama Status -->
-    <div class="bg-neutral-800 rounded-xl p-6 mb-6 shadow-lg">
+    <div class="bg-primary rounded-xl p-6 mb-6 shadow-lg">
       <h2 class="text-xl font-semibold mb-4">Ollama Connection</h2>
       
       <div class="flex items-center mb-4">
@@ -126,7 +128,7 @@ export default {
       
       <button 
         @click="checkOllamaStatus" 
-        class="px-4 py-2 bg-neutral-700 hover:bg-neutral-600 rounded-md transition-colors"
+        class="px-4 py-2 bg-accent hover:bg-accent-hover rounded-md transition-colors"
         :disabled="ollamaStatus.status === 'checking'"
       >
         <span v-if="ollamaStatus.status === 'checking'">Checking...</span>
@@ -135,7 +137,7 @@ export default {
     </div>
     
     <!-- Model Selection -->
-    <div class="bg-neutral-800 rounded-xl p-6 mb-6 shadow-lg">
+    <div class="bg-primary rounded-xl p-6 mb-6 shadow-lg">
       <h2 class="text-xl font-semibold mb-4">Model Selection</h2>
       
       <div class="mb-4">
@@ -144,7 +146,7 @@ export default {
           <select 
             id="model" 
             v-model="selectedModel" 
-            class="w-full bg-neutral-700 border border-neutral-600 text-white p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full bg-accent border border-border-accent text-text-primary p-2 rounded-md focus:outline-none focus:ring-2"
             :disabled="availableModels.length === 0 || ollamaStatus.status !== 'online'"
           >
             <option v-if="availableModels.length === 0" value="" disabled>No models available</option>
@@ -153,7 +155,7 @@ export default {
           
           <button 
             @click="refreshModels" 
-            class="px-3 bg-neutral-700 hover:bg-neutral-600 rounded-md transition-colors flex items-center justify-center"
+            class="px-3 bg-accent hover:bg-accent-hover rounded-md transition-colors flex items-center justify-center"
             :disabled="isRefreshing || ollamaStatus.status !== 'online'"
             :class="{ 'opacity-50 cursor-not-allowed': isRefreshing || ollamaStatus.status !== 'online' }"
           >
@@ -162,23 +164,25 @@ export default {
             </svg>
           </button>
         </div>
-        <p class="mt-2 text-sm text-neutral-400" v-if="availableModels.length > 0">
+        <p class="mt-2 text-sm text-text-secondary" v-if="availableModels.length > 0">
           {{ availableModels.length }} model(s) available
         </p>
-        <p class="mt-2 text-sm text-neutral-400" v-else-if="ollamaStatus.status === 'online'">
+        <p class="mt-2 text-sm text-text-secondary" v-else-if="ollamaStatus.status === 'online'">
           No models found. Try refreshing the list.
         </p>
-        <p class="mt-2 text-sm text-neutral-400" v-else>
+        <p class="mt-2 text-sm text-text-secondary" v-else>
           Connect to Ollama to view available models
         </p>
       </div>
     </div>
+
+    <ThemeSelector></ThemeSelector>
     
     <!-- Save Button -->
     <div class="mt-auto">
       <button 
         @click="saveSettings" 
-        class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors font-medium"
+        class="px-6 py-3 bg-settings-button-primary hover:bg-settings-button-primary-hover text-text-primary rounded-md transition-colors font-medium"
         :disabled="!selectedModel && ollamaStatus.status === 'online'"
       >
         Save Settings

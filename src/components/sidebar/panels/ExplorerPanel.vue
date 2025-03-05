@@ -100,27 +100,27 @@ export default {
         <span>Explorer</span>
       </span>
       <div>
-        <button @click="$emit('refreshFiles')" class="hover:bg-neutral-700 rounded" title="Refresh">
+        <button @click="$emit('refreshFiles')" class="hover:bg-accent rounded" title="Refresh">
           <i class="fas fa-sync-alt text-sm"></i>
         </button>
       </div>
     </div>
     
-    <div class="border-t border-neutral-800 my-1.5"></div>
+    <div class="border-t border-border-secondary my-1.5"></div>
     
-    <div v-if="!currentProject" class="px-2 py-2 text-neutral-400 text-sm">
+    <div v-if="!currentProject" class="px-2 py-2 text-text-secondary text-sm">
     <div class="flex flex-col space-y-2">
       <div class="text-center py-2">
       Open a project from the File menu or from the list below
       </div>
       
       <div v-if="recentProjects.length > 0" class="mt-4">
-      <div class="text-xs text-neutral-500 mb-2 font-semibold">RECENT PROJECTS</div>
+      <div class="text-xs text-text-accent mb-2 font-semibold">RECENT PROJECTS</div>
       <div
         v-for="project in recentProjects"
         :key="project.path"
         @click="openRecentProject(project)"
-        class="px-2 py-1.5 hover:bg-neutral-800 rounded cursor-pointer flex items-center text-sm"
+        class="px-2 py-1.5 hover:bg-primary rounded cursor-pointer flex items-center text-sm"
       >
         <i class="fas fa-folder mr-2 text-blue-400"></i>
         <div class="truncate">{{ project.name }}</div>
@@ -141,7 +141,7 @@ export default {
       :open-file="openFile"
       />
     </template>
-    <div v-else class="px-2 py-1 text-neutral-400 text-sm">
+    <div v-else class="px-2 py-1 text-text-secondary text-sm">
       No files found
     </div>
     </div>

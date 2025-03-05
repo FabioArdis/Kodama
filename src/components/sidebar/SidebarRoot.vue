@@ -314,7 +314,7 @@ export default {
     <transition name="slide">
       <div
         v-if="expanded"
-        class="bg-neutral-900 rounded-4xl overflow-auto custom-scrollbar relative"
+        class="bg-secondary rounded-4xl overflow-auto custom-scrollbar relative"
         :style="{ width: `${sidebarWidth}px` }"
       >
         <div class="p-2 rounded-4xl h-full">

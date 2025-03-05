@@ -12,10 +12,15 @@ use rayon::prelude::*;
 use walkdir::WalkDir;
 use ignore::WalkBuilder;
 
-#[tauri::command]
-fn greet(name: &str) -> String {
-  format!("Hello, {}! You've been greeted from Rust!", name)
-}
+
+/// Creates a new Tauri window with the specified label.
+/// 
+/// # Arguments
+/// * `app` - The Tauri application handle
+/// * `label` - The label/identifier for the new window
+/// 
+/// # Returns
+/// Nothing, as the function performs an action asynchronously
 #[tauri::command]
 async fn create_window(app: tauri::AppHandle, label: String) {
   let url = tauri::WebviewUrl::App(format!("{}.html", label).into());
@@ -25,35 +30,65 @@ async fn create_window(app: tauri::AppHandle, label: String) {
     .unwrap();
 }
 
+/// Configuration options for the search functionality.
 #[derive(Serialize, Deserialize)]
 struct SearchOptions {
+  /// Whether the search should be case-sensitive
   case_sensitive: bool,
+  /// Whether to match whole words only
   whole_word: bool,
+  /// Whether to interpret the search term as a regular expression
   use_regex: bool,
+  /// Patterns to exclude from the search
   exclude_patterns: Vec<String>,
+  /// Whether to include files that would normally be ignored by .gitignore
   include_ignored: bool,
 }
 
+/// Represents a single matching line within a file.
 #[derive(Serialize)]
 struct Match {
+  /// Line number where the match was found, starts at 1
   line_number: usize,
+  /// Content of the line containing the match
   line_content: String,
+  /// Character index within the line where the match starts, starts at 0
   match_index: usize,
 }
 
+/// Represents all matches found within a single file.
 #[derive(Serialize)]
 struct FileMatch {
+  /// Path to the file containing matches (relative to project root)
   file_path: String,
+  /// List of matches found in this file
   matches: Vec<Match>,
 }
 
+/// Summary of search results across all files.
 #[derive(Serialize)]
 struct SearchResults {
+  /// List of files containing matches with their match details
   matches: Vec<FileMatch>,
+  /// Total number of files searched
   files_searched: usize,
+  /// Total number of matches found across all files
   total_matches: usize,
 }
 
+/// Searches for a term across all files in a project directory.
+/// 
+/// This command provides code search functionality with options for
+/// case sensitivity, whole word matching, regex support, and respecting .gitignore files.
+/// 
+/// # Arguments
+/// * `project_path` - Root directory of the project to search
+/// * `search_term` - String or pattern to search for
+/// * `options` - Configuration options for the search
+/// 
+/// # Returns
+/// * `Ok(SearchResults)` - Search results including matches and statistics
+/// * `Err(String)` - Error message if search fails
 #[tauri::command]
 fn search_in_project(project_path: String, search_term: String, options: SearchOptions) -> Result<SearchResults, String> {
   let start = Instant::now();
@@ -146,6 +181,16 @@ fn search_in_project(project_path: String, search_term: String, options: SearchO
   })
 }
 
+/// Processes a single file to find matches for the given regex pattern.
+/// 
+/// # Arguments
+/// * `file_path` - Path to the file to process
+/// * `regex` - Compiled regex pattern to search for
+/// * `project_path` - Base project path for creating relative paths
+/// 
+/// # Returns
+/// * `Some(FileMatch)` - If matches were found in the file
+/// * `None` - If no matches were found or the file couldn't be processed
 fn process_file(file_path: &Path, regex: &Regex, project_path: &str) -> Option<FileMatch> {
   // Skip binary files
   if is_likely_binary(file_path) {
@@ -186,7 +231,14 @@ fn process_file(file_path: &Path, regex: &Regex, project_path: &str) -> Option<F
   })
 }
 
-// Simple heuristic to detect binary files, will probably be replaced later
+/// Determines if a file is likely to be binary based on its extension.
+/// 
+/// # Arguments
+/// * `file_path` - Path to the file to check
+/// 
+/// # Returns
+/// * `true` if the file is likely binary
+/// * `false` if the file is likely text
 fn is_likely_binary(file_path: &Path) -> bool {
   // Skip files without extensions or with binary extensions
   let binary_extensions = [
@@ -203,26 +255,45 @@ fn is_likely_binary(file_path: &Path) -> bool {
   false
 }
 
+/// Configuration for executing external commands in the IDE.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct CommandConfig {
+  /// Name/label of the command
   name: String,
+  /// The command to execute
   command: String,
+  /// Command-line arguments
   args: Vec<String>,
+  /// Working directory for command execution
   cwd: String,
+  /// Optional environment variables to set
   #[serde(skip_serializing_if = "Option::is_none")]
   env: Option<std::collections::HashMap<String, String>>,
 }
 
+/// Output from a running command to be sent to the frontend.
 #[derive(Debug, Serialize, Clone)]
 struct CommandOutput {
+  /// Text output from stdout or stderr
   output: String,
+  /// Whether this is error output
   is_error: bool,
+  /// Whether this is the final output (command has completed)
   is_final: bool,
 }
 
-// List of running processes
+/// State to track all running processes spawned by the application.
 struct RunningProcesses(Arc<Mutex<Vec<u32>>>);
 
+/// Executes an external command asynchronously and streams output back to the frontend.
+/// 
+/// # Arguments
+/// * `config` - Command configuration details
+/// * `project_path` - Base project path for variable substitution
+/// 
+/// # Returns
+/// * `Ok(())` - If command was successfully started
+/// * `Err(String)` - If command failed to start
 #[tauri::command]
 async fn execute_command(app: tauri::AppHandle, config: CommandConfig, project_path: String) -> Result<(), String> {
   println!("Handling a new command. \nCommandConfig: name:{}, command:{}, cwd:{}", config.name, config.command, config.cwd);
@@ -320,6 +391,15 @@ async fn execute_command(app: tauri::AppHandle, config: CommandConfig, project_p
   Ok(())
 }
 
+/// Terminates a running command process.
+/// 
+/// # Arguments
+/// * `pid` - Process ID to terminate
+/// * `state` - Application state containing running processes
+/// 
+/// # Returns
+/// * `Ok(())` - If process was successfully terminated
+/// * `Err(String)` - If process couldn't be terminated or wasn't found
 #[tauri::command]
 fn terminate_command(pid: u32, state: State<'_, RunningProcesses>) -> Result<(), String> {
   let mut processes = state.0.lock().unwrap();
@@ -348,6 +428,10 @@ fn terminate_command(pid: u32, state: State<'_, RunningProcesses>) -> Result<(),
   }
 }
 
+/// Main entry point for the Tauri application.
+/// 
+/// Sets up and configures the Tauri application with required plugins
+/// and command handlers.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
@@ -355,7 +439,7 @@ pub fn run() {
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_process::init())
     .plugin(tauri_plugin_opener::init())
-    .invoke_handler(tauri::generate_handler![greet, create_window,search_in_project, execute_command, terminate_command])
+    .invoke_handler(tauri::generate_handler![create_window,search_in_project, execute_command, terminate_command])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }

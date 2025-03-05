@@ -263,7 +263,7 @@ export default {
       const match = line.substring(matchIndex, matchIndex + matchLength);
       const afterMatch = line.substring(matchIndex + matchLength);
       
-      return `${beforeMatch}<span class="bg-yellow-800 text-white font-medium">${match}</span>${afterMatch}`;
+      return `${beforeMatch}<span class="bg-search-highlight text-text-primary font-medium">${match}</span>${afterMatch}`;
     }
   }
 };
@@ -278,7 +278,7 @@ export default {
       </span>
     </div>
 
-    <div class="border-t border-neutral-800 my-1.5"></div>
+    <div class="border-t border-border-secondary my-1.5"></div>
     
     <!-- Search input and button -->
     <div class="flex space-x-2 mb-3">
@@ -288,12 +288,12 @@ export default {
         @input="updateInput"
         @keyup.enter="search"
         placeholder="Search in project..."
-        class="flex-1 px-3 py-2 bg-neutral-800 rounded border border-neutral-700 text-white"
+        class="flex-1 px-3 py-2 bg-primary rounded border border-border-secondary text-text-primary"
       />
       <button
         @click="search"
         :disabled="!canSearch || searchInProgress"
-        class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded disabled:bg-blue-800 disabled:opacity-50"
+        class="px-3 py-2 bg-accent hover:bg-accent-hover text-text-primary rounded disabled:bg-accent-hover disabled:opacity-50"
       >
         <i class="fas fa-search mr-1"></i>
         {{ searchInProgress ? 'Searching...' : 'Search' }}
@@ -302,19 +302,19 @@ export default {
     
     <!-- Search options -->
     <div class="mb-3 flex flex-wrap gap-2">
-      <label class="flex items-center text-sm text-neutral-400">
+      <label class="flex items-center text-sm text-text-secondary">
         <input type="checkbox" v-model="searchOptions.caseSensitive" class="mr-1" />
         Case sensitive
       </label>
-      <label class="flex items-center text-sm text-neutral-400">
+      <label class="flex items-center text-sm text-text-secondary">
         <input type="checkbox" v-model="searchOptions.wholeWord" class="mr-1" />
         Whole word
       </label>
-      <label class="flex items-center text-sm text-neutral-400">
+      <label class="flex items-center text-sm text-text-secondary">
         <input type="checkbox" v-model="searchOptions.regex" class="mr-1" />
         Regex
       </label>
-      <label class="flex items-center text-sm text-neutral-400">
+      <label class="flex items-center text-sm text-text-secondary">
         <input type="checkbox" v-model="searchOptions.includeIgnored" class="mr-1" />
         Include ignored
       </label>
@@ -322,11 +322,11 @@ export default {
     
     <!-- Excluded patterns -->
     <div class="mb-3">
-      <div class="flex justify-between text-sm text-neutral-400 mb-1">
+      <div class="flex justify-between text-sm text-text-secondary mb-1">
         <span>Excluded patterns:</span>
         <button 
           @click="addExcludePattern(prompt('Enter pattern to exclude:'))"
-          class="text-blue-400 hover:text-blue-300"
+          class="text-search-button-primary hover:text-search-button-primary-hover"
         >
           <i class="fas fa-plus"></i> Add
         </button>
@@ -335,12 +335,12 @@ export default {
         <span 
           v-for="pattern in excludePatterns" 
           :key="pattern"
-          class="bg-neutral-800 px-2 py-1 rounded text-sm text-neutral-300 flex items-center"
+          class="bg-primary px-2 py-1 rounded text-sm text-text-accent flex items-center"
         >
           {{ pattern }}
           <button 
             @click="removeExcludePattern(pattern)" 
-            class="ml-1 text-neutral-500 hover:text-neutral-300"
+            class="ml-1 text-text-secondary hover:text-text-accent"
           >
             <i class="fas fa-times"></i>
           </button>
@@ -349,16 +349,16 @@ export default {
     </div>
     
     <!-- Search stats -->
-    <div v-if="results.length > 0 || searchStats.searchTime > 0" class="mb-3 text-sm text-neutral-400">
+    <div v-if="results.length > 0 || searchStats.searchTime > 0" class="mb-3 text-sm text-text-secondary">
       Found {{ searchStats.matchesFound }} matches in {{ searchStats.filesSearched }} files ({{ searchStats.searchTime }}s)
     </div>
     
     <!-- Results -->
-    <div v-if="searchInProgress" class="text-center py-4 text-neutral-400">
+    <div v-if="searchInProgress" class="text-center py-4 text-text-secondary">
       <i class="fas fa-spinner fa-spin mr-2"></i> Searching...
     </div>
     
-    <div v-else-if="results.length === 0 && searchStats.searchTime > 0" class="text-center py-4 text-neutral-400">
+    <div v-else-if="results.length === 0 && searchStats.searchTime > 0" class="text-center py-4 text-text-secondary">
       No results found
     </div>
     
@@ -366,28 +366,28 @@ export default {
       <div 
         v-for="result in results" 
         :key="result.file_path" 
-        class="mb-4 bg-neutral-800 rounded overflow-hidden"
+        class="mb-4 bg-primary rounded overflow-hidden"
       >
         <div 
-          class="bg-neutral-700 px-3 py-2 flex justify-between items-center cursor-pointer hover:bg-neutral-600"
+          class="bg-accent px-3 py-2 flex justify-between items-center cursor-pointer hover:bg-neutral-600"
           @click="handleOpenFile(result)"
         >
-          <span class="text-white truncate">{{ result.file_path }}</span>
-          <span class="text-neutral-400 text-sm">{{ result.matches.length }} matches</span>
+          <span class="text-text-primary truncate">{{ result.file_path }}</span>
+          <span class="text-text-secondary text-sm">{{ result.matches.length }} matches</span>
         </div>
         <div class="p-2">
           <div 
             v-for="match in result.matches.slice(0, 5)" 
             :key="`${result.file_path}-${match.line_number}`"
-            class="py-1 px-2 text-sm hover:bg-neutral-700 rounded cursor-pointer"
+            class="py-1 px-2 text-sm hover:bg-accent rounded cursor-pointer"
             @click="handleOpenFile(result)"
           >
             <div class="flex">
-              <span class="text-neutral-500 inline-block w-8 text-right mr-2">{{ match.line_number }}</span>
-              <span class="text-neutral-300 whitespace-pre" v-html="highlightMatch(match.line_content, match.match_index, localSearchInput, match.matchLength)"></span>
+              <span class="text-text-secondary inline-block w-8 text-right mr-2">{{ match.line_number }}</span>
+              <span class="text-text-accent whitespace-pre" v-html="highlightMatch(match.line_content, match.match_index, localSearchInput, match.matchLength)"></span>
             </div>
           </div>
-          <div v-if="result.matches.length > 5" class="text-center text-sm text-neutral-500 mt-1">
+          <div v-if="result.matches.length > 5" class="text-center text-sm text-text-secondary mt-1">
             + {{ result.matches.length - 5 }} more matches
           </div>
         </div>

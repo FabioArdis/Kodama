@@ -174,7 +174,7 @@ export default {
         }
         const timeTaken = (((Date.now() - startTime) / 1000).toFixed(2));
         const finalContent = this.renderMarkdown(messageContent);
-        this.updateMessage(finalContent + `<br><small class="text-gray-400">took ${timeTaken} seconds</small>`);
+        this.updateMessage(finalContent + `<br><small class="text-chat-text-accent">took ${timeTaken} seconds</small>`);
         this.applyHighlighting();
         setTimeout(() => {
           this.addCodeBlockActions();
@@ -218,23 +218,13 @@ export default {
           actionsContainer.style.marginTop = "8px";
           
           const applyButton = document.createElement("button");
-          applyButton.className = "apply-button";
+          applyButton.className = "apply-button px-2 py-1 text-xs bg-chat-code-apply hover:bg-chat-code-apply-hover rounded transition-colors";
           applyButton.textContent = "Apply to Editor";
-          applyButton.style.backgroundColor = "#2563eb";
-          applyButton.style.color = "white";
-          applyButton.style.padding = "4px 8px";
-          applyButton.style.borderRadius = "4px";
-          applyButton.style.fontSize = "12px";
           applyButton.onclick = () => this.applyCodeToEditor(codeBlock.textContent);
           
           const copyButton = document.createElement("button");
-          copyButton.className = "copy-button";
+          copyButton.className = "copy-button px-2 py-1 text-xs bg-chat-code-copy hover:bg-chat-code-copy-hover rounded transition-colors";
           copyButton.textContent = "Copy";
-          copyButton.style.backgroundColor = "#525252";
-          copyButton.style.color = "white";
-          copyButton.style.padding = "4px 8px";
-          copyButton.style.borderRadius = "4px";
-          copyButton.style.fontSize = "12px";
           copyButton.onclick = () => {
             navigator.clipboard.writeText(codeBlock.textContent);
             copyButton.textContent = "Copied!";
@@ -290,7 +280,7 @@ export default {
   <div class="relative z-10">
     <button
       @click="toggleChat"
-      class="fixed right-8 bg-neutral-700 p-3 rounded-xl"
+      class="fixed right-8 bg-chat-accent p-3 rounded-xl"
       :style="{ bottom: `calc(4rem + 1rem)` }"
     >
       <i class="fas fa-comments"></i>
@@ -298,29 +288,29 @@ export default {
     <transition name="slide">
       <div
         v-if="chatOpen"
-        class="fixed top-0 right-0 h-[calc(100%-2rem)] bg-neutral-700 rounded-l-lg shadow-lg overflow-hidden flex flex-col z-10"
+        class="fixed top-0 right-0 h-[calc(100%-2rem)] bg-chat-accent rounded-l-lg shadow-lg overflow-hidden flex flex-col z-10"
         :style="{ width: `${chatWidth}px` }"
       >
         <div
           class="absolute top-0 left-0 w-1 h-full cursor-ew-resize hover:bg-blue-500"
           @mousedown="startResize"
-          :class="{ 'bg-blue-500': isResizing, 'bg-neutral-600': !isResizing }"
+          :class="{ 'bg-blue-500': isResizing, 'bg-chat-resize-bar': !isResizing }"
         ></div>
         <div class="flex justify-between items-center p-4">
           <span class="text-lg font-semibold">Chat</span>
           <div>
             <!-- Just for debugging
-            <button @click="addCodeBlockActions(true)" class="text-neutral-300 mr-3 text-sm hover:text-white">
+            <button @click="addCodeBlockActions(true)" class="text-text-accent mr-3 text-sm hover:text-text-primary">
               <i class="fas fa-sync"></i> Fix Buttons
             </button>
             -->
-            <button @click="clearChatHistory" class="text-neutral-300 mr-3 text-sm hover:text-white">
+            <button @click="clearChatHistory" class="text-text-accent mr-3 text-sm hover:text-text-primary">
               <i class="fas fa-trash"></i> Clear
             </button>
-            <button @click="toggleChat" class="text-neutral-300 hover:text-white">&times;</button>
+            <button @click="toggleChat" class="text-text-accent hover:text-text-primary">&times;</button>
           </div>
         </div>
-        <div class="chat-container bg-neutral-800 rounded-xl p-4 mx-4 mb-4 flex-grow overflow-hidden flex flex-col">
+        <div class="chat-container bg-chat-primary rounded-xl p-4 mx-4 mb-4 flex-grow overflow-hidden flex flex-col">
           <div class="messages-container flex-grow overflow-y-auto">
             <transition name="fade">
               <template v-if="messages.length > 0">
@@ -328,11 +318,11 @@ export default {
                   <div v-for="message in messages" :key="message.id" class="message-container mb-4">
                     <div v-if="message.sender === 'Error'" class="ai-message bg-red-800 p-3 rounded-lg shadow-lg">
                       <p v-html="message.content"></p>
-                      <small v-if="message.timestamp" class="text-gray-400 block mt-1">
+                      <small v-if="message.timestamp" class="text-chat-text-accent block mt-1">
                         {{ formatTime(message.timestamp) }}
                       </small>
                     </div>
-                    <div v-else-if="message.sender === 'AI'" class="ai-message bg-neutral-900 p-3 rounded-lg shadow-lg">
+                    <div v-else-if="message.sender === 'AI'" class="ai-message bg-chat-secondary p-3 rounded-lg shadow-lg">
                       <div class="prose prose-invert prose-sm max-w-none" v-html="message.content"></div>
                       <div
                         v-for="block in codeBlocks.filter(b => b.messageIndex === message.id)"
@@ -342,25 +332,25 @@ export default {
                         <div class="code-actions flex gap-2 mt-2">
                           <button
                             @click="applyCode(block.content)"
-                            class="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                            class="px-2 py-1 text-xs bg-chat-code-apply hover:bg-chat-code-apply-hover rounded transition-colors"
                           >
                             Apply to Editor
                           </button>
                           <button
                             @click="copyCode(block.content)"
-                            class="px-2 py-1 text-xs bg-gray-600 hover:bg-gray-700 rounded transition-colors"
+                            class="px-2 py-1 text-xs bg-chat-code-copy hover:bg-chat-code-copy-hover rounded transition-colors"
                           >
                             Copy
                           </button>
                         </div>
                       </div>
-                      <small v-if="message.timestamp" class="text-gray-400 block mt-1">
+                      <small v-if="message.timestamp" class="text-chat-text-accent block mt-1">
                         {{ formatTime(message.timestamp) }}
                       </small>
                     </div>
-                    <div v-else class="user-message bg-neutral-700 p-3 rounded-lg text-white">
+                    <div v-else class="user-message bg-chat-accent p-3 rounded-lg text-text-primary">
                       <p>{{ message.content }}</p>
-                      <small v-if="message.timestamp" class="text-gray-400 block mt-1 text-right">
+                      <small v-if="message.timestamp" class="text-chat-text-accent block mt-1 text-right">
                         {{ formatTime(message.timestamp) }}
                       </small>
                     </div>
@@ -368,23 +358,23 @@ export default {
                 </transition-group>
               </template>
               <template v-else>
-                <div class="empty-chat flex flex-col items-center text-center p-6 text-neutral-200">
-                  <h2 class="text-xl font-bold text-neutral-100">Don't be shy and start chatting!</h2>
+                <div class="empty-chat flex flex-col items-center text-center p-6 text-text-secondary">
+                  <h2 class="text-xl font-bold text-text-primary">Don't be shy and start chatting!</h2>
                   <p class="mt-2 text-base">Here are some examples to get you started:</p>
 
-                  <ul class="mt-4 space-y-2 text-sm text-neutral-300">
+                  <ul class="mt-4 space-y-2 text-sm text-text-accent">
                     <li class="flex items-center gap-2 p-2 outline-1 rounded-md">
-                      <span class="text-neutral-300">➤</span> "How do I implement a sorting algorithm in JavaScript?"
+                      <span class="text-text-accent">➤</span> "How do I implement a sorting algorithm in JavaScript?"
                     </li>
                     <li class="flex items-center gap-2 p-2 outline-1 rounded-md">
-                      <span class="text-neutral-300">➤</span> "Can you show me how to use Vue.js computed properties?"
+                      <span class="text-text-accent">➤</span> "Can you show me how to use Vue.js computed properties?"
                     </li>
                     <li class="flex items-center gap-2 p-2 outline-1 rounded-md">
-                      <span class="text-neutral-300">➤</span> "What are some good practices for responsive design?"
+                      <span class="text-text-accent">➤</span> "What are some good practices for responsive design?"
                     </li>
                   </ul>
 
-                  <p class="mt-6 text-sm text-neutral-300">
+                  <p class="mt-6 text-sm text-text-accent">
                     Select text or code in your editor and use the 
                     <span class="font-medium text-blue-500">"Apply to Editor"</span> button to immediately see them in action.
                   </p>
@@ -396,14 +386,14 @@ export default {
             <textarea
               v-model="userInput"
               placeholder="Ask a question..."
-              class="p-2 bg-neutral-700 text-white rounded-md w-full mb-2 resize-none"
+              class="p-2  bg-chat-accent text-text-primary rounded-md w-full mb-2 resize-none"
               rows="2"
               @keydown.enter.prevent="sendMessage"
               :disabled="processingResponse"
             ></textarea>
             <button
               @click="sendMessage"
-              class="p-2 bg-neutral-900 text-white rounded-md w-full hover:bg-neutral-800 transition"
+              class="p-2 bg-chat-secondary text-text-primary rounded-md w-full hover:bg-chat-primary transition"
               :disabled="processingResponse || !userInput.trim()"
               :class="{ 'opacity-50 cursor-not-allowed': processingResponse || !userInput.trim() }"
             >
@@ -473,18 +463,6 @@ pre code {
   border-radius: 0.375rem;
   color: white;
   transition: background-color 0.2s;
-}
-.code-actions button:first-child {
-  background-color: #2563eb;
-}
-.code-actions button:first-child:hover {
-  background-color: #1d4ed8;
-}
-.code-actions button:last-child {
-  background-color: #525252;
-}
-.code-actions button:last-child:hover {
-  background-color: #404040;
 }
 
 .messages-container {

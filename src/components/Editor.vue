@@ -327,35 +327,35 @@ export default {
 
   <!-- Tabs -->
   <main class="flex-1 relative w-full h-full overflow-hidden flex flex-col rounded-4xl">
-    <div class="bg-neutral-900 p-2 flex items-center h-12">
+    <div class="bg-secondary p-2 flex items-center h-12">
       <div v-for="tab in tabs" :key="tab.id" class="mx-1 text-xs px-4 py-2 cursor-pointer" 
-           :class="{ 'rounded-xl outline outline-neutral-700': activeTab === tab.id }"
+           :class="{ 'rounded-xl outline outline-accent': activeTab === tab.id }"
            @mousedown="handleTabMouseDown($event, tab.id)">
         <span @click="activeTab = tab.id">{{ tab.name }}</span>
         <span class="ml-2 cursor-pointer" @click.stop="closeTab(tab.id)">&times;</span>
       </div>
-      <button @click="addTab()" class="ml-2 text-xs px-3 py-1 rounded-lg bg-neutral-800 hover:bg-neutral-700">
+      <button @click="addTab()" class="ml-2 text-xs px-3 py-1 rounded-lg bg-primary hover:bg-accent">
         <span>+</span>
       </button>
     </div>
-    <div class="border-t border-neutral-800"></div>
+    <div class="border-t border-border-secondary"></div>
 
     <!-- Welcome Screen -->
-    <div v-if="showWelcomeScreen" class="w-full h-full flex flex-col items-center justify-center bg-neutral-900 text-neutral-300">
+    <div v-if="showWelcomeScreen" class="w-full h-full flex flex-col items-center justify-center bg-secondary text-text-accent">
       <div class="text-4xl font-light mb-6">Welcome to コーダマ - <i>Kōdama</i></div>
       <div class="flex flex-col gap-4 w-64">
-        <button @click="addTab()" class="flex items-center justify-center gap-3 py-3 px-4 bg-neutral-800 hover:bg-neutral-700 rounded-xl transition-colors">
+        <button @click="addTab()" class="flex items-center justify-center gap-3 py-3 px-4 bg-primary hover:bg-accent rounded-xl transition-colors">
           <span class="text-xl"><i class="fas fa-plus mr-2"></i></span>
           <span>New File</span>
         </button>
-        <button @click="$emit('open-file-dialog')" class="flex items-center justify-center gap-3 py-3 px-4 bg-neutral-800 hover:bg-neutral-700 rounded-xl transition-colors">
+        <button @click="$emit('open-file-dialog')" class="flex items-center justify-center gap-3 py-3 px-4 bg-primary hover:bg-accent rounded-xl transition-colors">
           <span class="text-xl"><i class="fas fa-file mr-2"></i></span>
           <span>Open File</span>
         </button>
       </div>
-      <div class="mt-8 px-6 py-4 bg-neutral-800 rounded-xl max-w-md">
+      <div class="mt-8 px-6 py-4 bg-primary rounded-xl max-w-md">
         <div class="text-lg font-medium mb-2">Recent Files</div>
-        <div class="text-sm text-neutral-400">No recent files</div>
+        <div class="text-sm text-text-secondary">No recent files</div>
         <!-- Will add logic to display recent files at a later time -->
       </div>
     </div>
@@ -378,14 +378,14 @@ export default {
     
     <!-- AI Contextual Menu -->
     <div v-if="aiContextMenu.show" 
-         class="ai-context-menu absolute z-50 bg-neutral-800 rounded-lg shadow-lg border border-neutral-700"
+         class="ai-context-menu absolute z-50 bg-primary rounded-lg shadow-lg border border-border-accent"
          :style="{ left: `${aiContextMenu.x}px`, top: `${aiContextMenu.y}px` }">
-      <div class="p-2 border-b border-neutral-700 text-xs font-medium">AI Actions</div>
+      <div class="p-2 border-b border-border-accent text-xs font-medium">AI Actions</div>
       <div class="max-h-60 overflow-y-auto">
         <div v-for="action in aiContextMenu.actions" 
              :key="action.id" 
              @click="handleAiAction(action.id)"
-             class="px-4 py-2 hover:bg-neutral-700 cursor-pointer text-sm">
+             class="px-4 py-2 hover:bg-accent cursor-pointer text-sm">
           {{ action.label }}
         </div>
       </div>
@@ -393,12 +393,12 @@ export default {
     
     <!-- Alternative, fixed AI Contextual Menu -->
     <div v-if="selectionActive && !aiContextMenu.show" 
-         class="fixed bottom-12 left-1/2 transform -translate-x-1/2 bg-neutral-800 rounded-full shadow-lg border border-neutral-700 px-4 py-2 flex space-x-2 z-50">
+         class="fixed bottom-12 left-1/2 transform -translate-x-1/2 bg-primary rounded-full shadow-lg border border-border-accent px-4 py-2 flex space-x-2 z-50">
       <button 
         v-for="action in aiContextMenu.actions"
         :key="action.id"
         @click="handleAiAction(action.id)"
-        class="px-3 py-1 rounded-full hover:bg-neutral-700 text-xs font-medium"
+        class="px-3 py-1 rounded-full hover:bg-accent text-xs font-medium"
       >
         {{ action.label }}
       </button>

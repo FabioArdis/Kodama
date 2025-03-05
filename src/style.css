@@ -1,1 +1,48 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+
+@theme inline {
+  --color-primary: var(--ide-theme-primary);
+  --color-secondary: var(--ide-theme-secondary);
+  --color-background: var(--ide-theme-background);
+  --color-accent: var(--ide-theme-accent);
+  --color-accent-hover: var(--ide-theme-accent-hover);
+  --color-text-primary: var(--ide-theme-text-primary);
+  --color-text-secondary: var(--ide-theme-text-secondary);
+  --color-text-accent: var(--ide-theme-text-accent);
+  --color-border-primary: var(--ide-theme-border-primary);
+  --color-border-secondary: var(--ide-theme-border-secondary);
+  --color-border-accent: var(--ide-theme-border-accent);
+
+  --color-chat-primary: var(--chat-theme-primary);
+  --color-chat-secondary: var(--chat-theme-secondary);
+  --color-chat-accent: var(--chat-theme-accent);
+  --color-chat-resize-bar: var(--chat-theme-resize-bar);
+  --color-chat-code-apply: var(--chat-theme-code-apply);
+  --color-chat-code-apply-hover: var(--chat-theme-code-apply-hover);
+  --color-chat-code-copy: var(--chat-theme-code-copy);
+  --color-chat-code-copy-hover: var(--chat-theme-code-copy-hover);
+
+  --color-search-button-primary: var(--search-theme-button-primary);
+  --color-search-button-primary-hover: var(--search-theme-button-primary-hover);
+  --color-search-highlight: var(--search-theme-highlight);
+
+  --color-chat-text-accent: var(--chat-theme-text-accent);
+
+  --color-statusbar-text-primary: var(--statusbar-theme-text-primary);
+
+  --color-runpanel-text-primary: var(--runpanel-theme-text-primary);
+  --color-runpanel-text-secondary: var(--runpanel-theme-text-secondary);
+
+  --color-terminal-primary: var(--terminal-theme-primary);
+  --color-terminal-text-primary: var(--terminal-theme-text-primary);
+
+  --color-command-primary: var(--command-theme-primary);
+  --color-command-hover: var(--command-theme-hover);
+  --color-command-border: var(--command-theme-border);
+  --color-command-selected: var(--command-theme-selected);
+  --color-command-text-primary: var(--command-theme-text-primary);
+  --color-command-text-secondary: var(--command-theme-text-secondary);
+
+  --color-settings-button-primary: var(--settings-theme-button-primary);
+  --color-settings-button-primary-hover: var(--settings-theme-button-primary-hover);
+}

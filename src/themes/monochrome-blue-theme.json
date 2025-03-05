@@ -1,0 +1,47 @@
+{
+  "name": "Monochrome Blue Theme",
+  "variables": {
+    "--ide-theme-primary": "rgb(235 240 249)",
+    "--ide-theme-secondary": "rgb(210 224 245)",
+    "--ide-theme-background": "#e8f0fe",
+    "--ide-theme-text-primary": "#1e3a8a",
+    "--ide-theme-text-secondary": "rgb(74 85 104)",
+    "--ide-theme-text-accent": "rgb(52 64 84)",
+    "--ide-theme-accent": "rgb(179 207 244)",
+    "--ide-theme-accent-hover": "rgb(198 221 250)",
+    "--ide-theme-border-primary": "rgb(198 221 250)",
+    "--ide-theme-border-secondary": "rgb(223 232 247)",
+    "--ide-theme-border-accent": "rgb(179 207 244)",
+
+    "--chat-theme-primary": "rgb(235 240 249)",
+    "--chat-theme-secondary": "rgb(210 224 245)",
+    "--chat-theme-accent": "rgb(179 207 244)",
+    "--chat-theme-resize-bar": "rgb(198 221 250)",
+    "--chat-theme-code-apply": "rgb(37 99 235)",
+    "--chat-theme-code-apply-hover": "rgb(29 78 216)",
+    "--chat-theme-code-copy": "rgb(179 207 244)",
+    "--chat-theme-code-copy-hover": "rgb(223 232 247)",
+    "--chat-theme-text-accent": "rgb(99 115 139)",
+
+    "--search-theme-button-primary": "rgb(37 99 235)",
+    "--search-theme-button-primary-hover": "rgb(29 78 216)",
+    "--search-theme-highlight": "rgb(37 99 235)",
+
+    "--statusbar-theme-text-primary": "rgb(99 115 139)",
+
+    "--runpanel-theme-text-primary": "rgb(99 115 139)",
+    "--runpanel-theme-text-secondary": "rgb(113 128 150)",
+    "--terminal-theme-primary": "rgb(255 255 255)",
+    "--terminal-theme-text-primary": "rgb(0, 0, 0)",
+
+    "--command-theme-primary": "rgb(210 224 245)",
+    "--command-theme-hover": "rgb(179 207 244)",
+    "--command-theme-border": "rgb(148 171 209)",
+    "--command-theme-selected": "rgb(223 232 247)",
+    "--command-theme-text-primary": "#1e3a8a",
+    "--command-theme-text-secondary": "rgb(113 128 150)",
+
+    "--settings-theme-button-primary": "rgb(37 99 235)",
+    "--settings-theme-button-primary-hover": "rgb(59 130 246)"
+  }
+}

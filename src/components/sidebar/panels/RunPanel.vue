@@ -376,10 +376,10 @@ export default {
       </span>
     </div>
     
-    <div class="border-t border-neutral-800 my-1.5"></div>
+    <div class="border-t border-border-secondary my-1.5"></div>
     
     <!-- No project warning -->
-    <div v-if="!projectReady" class="text-center p-4 text-gray-400">
+    <div v-if="!projectReady" class="text-center p-4 text-runpanel-text-primary">
       <i class="fas fa-folder-open text-2xl mb-2"></i>
       <p>Open a project to manage run configurations</p>
     </div>
@@ -398,13 +398,13 @@ export default {
     <div v-else class="flex-1 flex flex-col h-full">
       <!-- Configuration list and actions -->
       <div class="flex justify-between items-center mb-2">
-        <div class="text-sm text-gray-400">
+        <div class="text-sm text-runpanel-text-primary">
           <span v-if="hasConfigurations">{{ configurations.length }} configuration(s)</span>
           <span v-else>No configurations</span>
         </div>
         <button 
           @click="createConfiguration" 
-          class="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm"
+          class="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-text-primary rounded text-sm"
           v-if="!isCreating && !isEditing"
         >
           <i class="fas fa-plus mr-1"></i> New
@@ -412,24 +412,24 @@ export default {
       </div>
       
       <!-- Configuration creation form -->
-      <div v-if="isCreating" class="bg-neutral-800 p-3 rounded mb-3">
-        <h3 class="text-white font-medium mb-2">New Configuration</h3>
+      <div v-if="isCreating" class="bg-primary p-3 rounded mb-3">
+        <h3 class="text-text-primary font-medium mb-2">New Configuration</h3>
         
         <div class="mb-2">
-          <label class="block text-sm text-gray-400 mb-1">Name</label>
+          <label class="block text-sm text-runpanel-text-primary mb-1">Name</label>
           <input 
             v-model="newConfig.name"
             type="text"
-            class="w-full bg-neutral-700 text-white px-2 py-1 rounded text-sm"
+            class="w-full bg-accent text-text-primary px-2 py-1 rounded text-sm"
             placeholder="Configuration name"
           />
         </div>
         
         <div class="mb-2">
-          <label class="block text-sm text-gray-400 mb-1">Type</label>
+          <label class="block text-sm text-runpanel-text-primary mb-1">Type</label>
           <select
             v-model="newConfig.type"
-            class="w-full bg-neutral-700 text-white px-2 py-1 rounded text-sm"
+            class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
           >
             <option 
               v-for="type in configTypes" 
@@ -442,34 +442,34 @@ export default {
         </div>
         
         <div class="mb-2">
-          <label class="block text-sm text-gray-400 mb-1">Command</label>
+          <label class="block text-sm text-runpanel-text-primary mb-1">Command</label>
           <input 
             v-model="newConfig.command"
             type="text"
-            class="w-full bg-neutral-700 text-white px-2 py-1 rounded text-sm"
+            class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
             placeholder="Command to execute"
           />
         </div>
         
         <div class="mb-2">
-          <label class="block text-sm text-gray-400 mb-1">Arguments</label>
+          <label class="block text-sm text-runpanel-text-primary mb-1">Arguments</label>
           <input 
             v-model="newConfig.args"
             type="text"
-            class="w-full bg-neutral-700 text-white px-2 py-1 rounded text-sm"
+            class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
             placeholder="Space-separated arguments"
           />
         </div>
         
         <div class="mb-3">
-          <label class="block text-sm text-gray-400 mb-1">Working Directory</label>
+          <label class="block text-sm text-runpanel-text-primary mb-1">Working Directory</label>
           <input 
             v-model="newConfig.cwd"
             type="text"
-            class="w-full bg-neutral-700 text-white px-2 py-1 rounded text-sm"
+            class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
             placeholder="Working directory"
           />
-          <div class="text-xs text-gray-500 mt-1">
+          <div class="text-xs text-runpanel-text-secondary mt-1">
             Use ${workspaceFolder} for project root
           </div>
         </div>
@@ -477,13 +477,13 @@ export default {
         <div class="flex justify-end space-x-2">
           <button 
             @click="cancelCreate" 
-            class="px-2 py-1 bg-neutral-700 hover:bg-neutral-600 text-white rounded text-sm"
+            class="px-2 py-1 bg-accent hover:bg-accent-hover text-text-primaryrimary rounded text-sm"
           >
             Cancel
           </button>
           <button 
             @click="addConfiguration" 
-            class="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm"
+            class="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-text-primaryrimary rounded text-sm"
           >
             Create
           </button>
@@ -491,23 +491,23 @@ export default {
       </div>
       
       <!-- Configuration edit form -->
-      <div v-else-if="isEditing" class="bg-neutral-800 p-3 rounded mb-3">
-        <h3 class="text-white font-medium mb-2">Edit Configuration</h3>
+      <div v-else-if="isEditing" class="bg-primary p-3 rounded mb-3">
+        <h3 class="text-text-primaryrimary font-medium mb-2">Edit Configuration</h3>
         
         <div class="mb-2">
-          <label class="block text-sm text-gray-400 mb-1">Name</label>
+          <label class="block text-sm text-runpanel-text-primary mb-1">Name</label>
           <input 
             v-model="newConfig.name"
             type="text"
-            class="w-full bg-neutral-700 text-white px-2 py-1 rounded text-sm"
+            class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
           />
         </div>
         
         <div class="mb-2">
-          <label class="block text-sm text-gray-400 mb-1">Type</label>
+          <label class="block text-sm text-runpanel-text-primary mb-1">Type</label>
           <select
             v-model="newConfig.type"
-            class="w-full bg-neutral-700 text-white px-2 py-1 rounded text-sm"
+            class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
           >
             <option 
               v-for="type in configTypes" 
@@ -520,31 +520,31 @@ export default {
         </div>
         
         <div class="mb-2">
-          <label class="block text-sm text-gray-400 mb-1">Command</label>
+          <label class="block text-sm text-runpanel-text-primary mb-1">Command</label>
           <input 
             v-model="newConfig.command"
             type="text"
-            class="w-full bg-neutral-700 text-white px-2 py-1 rounded text-sm"
+            class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
           />
         </div>
         
         <div class="mb-2">
-          <label class="block text-sm text-gray-400 mb-1">Arguments</label>
+          <label class="block text-sm text-runpanel-text-primary mb-1">Arguments</label>
           <input 
             v-model="newConfig.argsString"
             type="text"
-            class="w-full bg-neutral-700 text-white px-2 py-1 rounded text-sm"
+            class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
           />
         </div>
         
         <div class="mb-3">
-          <label class="block text-sm text-gray-400 mb-1">Working Directory</label>
+          <label class="block text-sm text-runpanel-text-primary mb-1">Working Directory</label>
           <input 
             v-model="newConfig.cwd"
             type="text"
-            class="w-full bg-neutral-700 text-white px-2 py-1 rounded text-sm"
+            class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
           />
-          <div class="text-xs text-gray-500 mt-1">
+          <div class="text-xs text-runpanel-text-secondary mt-1">
             Use ${workspaceFolder} for project root
           </div>
         </div>
@@ -552,13 +552,13 @@ export default {
         <div class="flex justify-end space-x-2">
           <button 
             @click="cancelEdit" 
-            class="px-2 py-1 bg-neutral-700 hover:bg-neutral-600 text-white rounded text-sm"
+            class="px-2 py-1 bg-accent hover:bg-accent-hover text-text-primaryrimary rounded text-sm"
           >
             Cancel
           </button>
           <button 
             @click="updateConfiguration" 
-            class="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm"
+            class="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-text-primaryrimary rounded text-sm"
           >
             Update
           </button>
@@ -566,22 +566,22 @@ export default {
       </div>
       
       <!-- Configuration list -->
-      <div v-else-if="hasConfigurations" class="mb-2 overflow-y-auto max-h-40 bg-neutral-700 rounded">
+      <div v-else-if="hasConfigurations" class="mb-2 overflow-y-auto max-h-40 bg-accent rounded">
         <div 
           v-for="config in configurations" 
           :key="config.name"
           @click="selectConfiguration(config)"
-          class="p-2 cursor-pointer border-b border-neutral-700 last:border-b-0"
-          :class="{ 'bg-neutral-800': selectedConfig && selectedConfig.name === config.name }"
+          class="p-2 cursor-pointer border-b border-border-secondary last:border-b-0"
+          :class="{ 'bg-primary': selectedConfig && selectedConfig.name === config.name }"
         >
           <div class="flex items-center">
             <div class="flex-1">
-              <div class="text-white font-medium text-sm">{{ config.name }}</div>
-              <div class="text-xs text-gray-400 truncate">
+              <div class="text-text-primaryrimary font-medium text-sm">{{ config.name }}</div>
+              <div class="text-xs text-runpanel-text-primary truncate">
                 {{ config.command }} {{ formatArgs(config.args) }}
               </div>
             </div>
-            <div class="text-xs text-gray-500">{{ config.type }}</div>
+            <div class="text-xs text-runpanel-text-secondary">{{ config.type }}</div>
           </div>
         </div>
       </div>
@@ -589,12 +589,12 @@ export default {
       <!-- No configurations message -->
       <div 
         v-else-if="!isCreating && !isEditing && !hasConfigurations" 
-        class="mb-4 p-4 bg-neutral-800 rounded text-center"
+        class="mb-4 p-4 bg-primary rounded text-center"
       >
-        <p class="text-gray-400 mb-2">No run configurations found</p>
+        <p class="text-runpanel-text-primary mb-2">No run configurations found</p>
         <button 
           @click="createConfiguration" 
-          class="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm"
+          class="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-text-primaryrimary rounded text-sm"
         >
           <i class="fas fa-plus mr-1"></i> Create your first configuration
         </button>
@@ -603,14 +603,14 @@ export default {
       <!-- Configuration details and run controls -->
       <div 
         v-if="selectedConfig && !isCreating && !isEditing" 
-        class="bg-neutral-800 p-3 rounded mb-2"
+        class="bg-primary p-3 rounded mb-2"
       >
         <div class="flex justify-between items-center mb-2">
-          <h3 class="text-white font-medium text-sm">{{ selectedConfig.name }}</h3>
+          <h3 class="text-text-primary font-medium text-sm">{{ selectedConfig.name }}</h3>
           <div class="flex space-x-1">
             <button 
               @click="editConfiguration(selectedConfig)" 
-              class="text-gray-400 hover:text-white"
+              class="text-runpanel-text-primary hover:text-text-primary"
               title="Edit configuration"
               :disabled="isRunning"
               :class="{ 'opacity-50 cursor-not-allowed': isRunning }"
@@ -619,7 +619,7 @@ export default {
             </button>
             <button 
               @click="deleteConfiguration" 
-              class="text-gray-400 hover:text-red-400"
+              class="text-runpanel-text-primary hover:text-red-400"
               title="Delete configuration"
               :disabled="isRunning"
               :class="{ 'opacity-50 cursor-not-allowed': isRunning }"
@@ -629,18 +629,18 @@ export default {
           </div>
         </div>
         
-        <div class="text-xs text-neutral-400 mb-3">
-          <div class="mb-1"><span class="text-gray-500">Type:</span> {{ selectedConfig.type }}</div>
+        <div class="text-xs text-text-secondary mb-3">
+          <div class="mb-1"><span class="text-runpanel-text-secondary">Type:</span> {{ selectedConfig.type }}</div>
           <div class="mb-1">
-            <span class="text-gray-500">Command:</span> 
+            <span class="text-runpanel-text-secondary">Command:</span> 
             {{ selectedConfig.command }} {{ formatArgs(selectedConfig.args) }}
           </div>
-          <div><span class="text-gray-500">Working dir:</span> {{ selectedConfig.cwd }}</div>
+          <div><span class="text-runpanel-text-secondary">Working dir:</span> {{ selectedConfig.cwd }}</div>
         </div>
         
         <button 
           @click="runConfiguration" 
-          class="w-full py-1 bg-green-700 hover:bg-green-600 text-white rounded text-sm flex items-center justify-center"
+          class="w-full py-1 bg-green-700 hover:bg-green-600 text-text-primary rounded text-sm flex items-center justify-center"
           :disabled="isRunning"
           :class="{ 'opacity-50 cursor-not-allowed': isRunning }"
         >
@@ -650,12 +650,12 @@ export default {
       </div>
       
       <!-- Terminal -->
-      <div class="flex-1 bg-black rounded overflow-hidden flex flex-col min-h-32 mb-1">
-        <div class="bg-neutral-800 px-2 py-1 text-xs text-gray-400 flex items-center justify-between">
+      <div class="flex-1 bg-terminal-primary rounded overflow-hidden flex flex-col min-h-32 mb-1">
+        <div class="bg-primary px-2 py-1 text-xs text-runpanel-text-primary flex items-center justify-between">
           <span>Output</span>
           <div v-if="runOutput">
             <button 
-              class="text-gray-400 hover:text-white"
+              class="text-runpanel-text-primary hover:text-text-primary"
               title="Clear output"
               @click="runOutput = ''"
             >
@@ -663,7 +663,7 @@ export default {
             </button>
           </div>
         </div>
-        <div class="flex-1 p-2 overflow-auto font-mono text-xs text-gray-300 whitespace-pre-line">
+        <div class="flex-1 p-2 overflow-auto font-mono text-xs text-terminal-text-primary whitespace-pre-line">
           {{ runOutput || 'Run a configuration to see output here' }}
         </div>
       </div>
