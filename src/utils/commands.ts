@@ -92,6 +92,13 @@ export function registerDefaultCommands(callbacks: {
       execute: () => {} // No need to handle this
     },
     {
+      id: 'view.immersiveMode',
+      title: 'Toggle Immersive Mode',
+      category: 'View',
+      shortcut: 'Ctrl+Alt+Enter',
+      execute: () => callbacks.toggleImmersiveMode?.()
+    },
+    {
       id: 'view.setTheme',
       title: 'Set Theme',
       category: 'View',

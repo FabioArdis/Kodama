@@ -50,3 +50,5 @@ yarn.lock
 
 # VSCode configs
 .vscode/
+
+dist

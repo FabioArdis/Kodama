@@ -295,7 +295,18 @@ export default {
     
     updateSearchInput(value) {
       this.searchInput = value;
-    }
+    },
+
+    clearRecentProjects() {
+      this.recentProjects = [];
+      this.saveRecentProjects();
+    },
+
+    removeRecentProject(project) {
+      this.recentProjects = this.recentProjects.filter(p => p.path !== project.path);
+      
+      this.saveRecentProjects();
+    },
   },
 };
 </script>
@@ -328,6 +339,8 @@ export default {
             @refreshFiles="loadProjectFiles"
             @openRecentProject="openRecentProject"
             @openFile="openFile"
+            @clearRecentProjects="clearRecentProjects"
+            @removeRecentProject="removeRecentProject"
           />
 
           <!-- Search Panel -->

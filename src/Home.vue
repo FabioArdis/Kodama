@@ -18,6 +18,8 @@ import ThemeSelector from "./components/ThemeSelector.vue";
 
 import { open } from "@tauri-apps/plugin-dialog";
 
+import { getCurrentWindow } from "@tauri-apps/api/window";
+
 export default {
   components: { MenuBar, SidebarRoot, Editor, Chat, CommandPalette, ThemeSelector },
   data() {
@@ -33,7 +35,9 @@ export default {
       /** Whether the command palette is visible */
       commandPaletteVisible: false,
       /** Available commands for the command palette */
-      commands: []
+      commands: [],
+      /** Whether the application is in immersive mode */
+      immersiveMode: false
     };
   },
   /**
@@ -112,7 +116,19 @@ export default {
         openFile: this.handleOpenFileDialog,
         openProject: this.handleOpenProject,
         openSettings: this.handleOpenSettings,
+        toggleImmersiveMode: this.toggleImmersiveMode,
       });
+    },
+
+    toggleImmersiveMode() {
+      this.immersiveMode = !this.immersiveMode;
+      
+      if (this.immersiveMode) {
+        // Bugged on Windows if the app is maximized.
+        // getCurrentWindow().setFullscreen(true);
+      } else {
+        //getCurrentWindow().setFullscreen(false);
+      }
     },
     
     /**
@@ -134,7 +150,11 @@ export default {
         return;
       }
       
-      // Other shortcuts can be handled here
+      if (event.ctrlKey && event.altKey && event.code === 'Enter') {
+        event.preventDefault();
+        this.toggleImmersiveMode();
+        return;
+      }
     },
     
     /**
@@ -275,15 +295,21 @@ export default {
 </script>
 
 <template>
-  <div class="flex flex-col h-screen bg-primary text-text-primary">
+  <div class="flex flex-col h-screen bg-primary text-text-primary"
+    :class="{ 'overflow-hidden': immersiveMode }">
     <!-- Top menu bar component -->
-    <MenuBar @newFile="handleNewFile" @openFileDialog="handleOpenFileDialog" @openSettings="handleOpenSettings" @openProject="handleOpenProject" />
+    <MenuBar v-if="!immersiveMode" @newFile="handleNewFile" @openFileDialog="handleOpenFileDialog" @openSettings="handleOpenSettings" @openProject="handleOpenProject" />
     
     <!-- Components in the middle -->
-    <div class="flex flex-1 overflow-hidden relative">
+    <div class="flex flex-1 overflow-hidden relative"
+      :class="{
+        'justify-center items-center': immersiveMode,
+        'bg-editor-background': immersiveMode
+      }">
       
       <!-- Sidebar  -->
-      <SidebarRoot 
+      <SidebarRoot
+        v-if="!immersiveMode"
         ref="sidebar" 
         @openFile="handleOpenFile" 
         @widthChanged="handleSidebarWidthChange" 
@@ -291,20 +317,29 @@ export default {
 
       <!-- Code Editor -->
       <Editor 
-        ref="editor" 
-        :style="{ marginLeft: editorMargin }" 
-        class="flex-grow transition-all duration-100" 
+      ref="editor" 
+        :style="{ 
+          marginLeft: immersiveMode ? '20%' : editorMargin,
+          marginRight: immersiveMode ? '20%' : '0',
+          width: immersiveMode ? '80%' : 'auto',
+          maxWidth: immersiveMode ? '100%' : 'none'
+        }" 
+        class="flex-grow transition-all duration-300" 
+        :class="{
+          'shadow-2xl': immersiveMode,
+          'mx-auto': immersiveMode
+        }"
       />
 
       <!-- Chat interface -->
-      <Chat ref="chat" @applyCode="handleApplyCode" />
+      <Chat v-if="!immersiveMode" ref="chat" @applyCode="handleApplyCode" />
 
     </div>
 
     <!-- Status bar, will probably become a component later on -->
-    <div class="border-t border-border-primary my-2"></div>
+    <div v-if="!immersiveMode" class="border-t border-border-primary my-2"></div>
     
-    <div class="bg-primary text-statusbar-text-primary p-1 text-xs flex items-center justify-between select-none relative mx-4 bottom-1">
+    <div v-if="!immersiveMode" class="bg-primary text-statusbar-text-primary p-1 text-xs flex items-center justify-between select-none relative mx-4 bottom-1">
       <div class="flex items-center space-x-2">
         <span>Kōdama v{{appVersion}}</span>
       </div>

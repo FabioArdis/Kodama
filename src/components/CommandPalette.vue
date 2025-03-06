@@ -89,7 +89,7 @@ export default {
   <div v-if="isVisible" class="command-palette-backdrop fixed top-0 left-0 w-full h-full bg-black/50 flex justify-center items-start pt-[54px] z-[1000]">
     <div 
       ref="palette" 
-      class="command-palette w-[600px] max-w-full bg-command-primary rounded-2xl shadow-lg overflow-hidden flex flex-col"
+      class="command-palette w-[450px] max-w-full bg-command-primary rounded-2xl shadow-lg overflow-hidden flex flex-col"
       @keydown="handleKeyDown"
     >
       <div class="command-input-container flex items-center p-3 border-b border-command-border">

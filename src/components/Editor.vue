@@ -338,30 +338,37 @@ export default {
         <span>+</span>
       </button>
     </div>
-    <div class="border-t border-border-secondary"></div>
+    <div class="border-t border-border-accent"></div>
 
     <!-- Welcome Screen -->
-    <div v-if="showWelcomeScreen" class="w-full h-full flex flex-col items-center justify-center bg-secondary text-text-accent">
-      <div class="text-4xl font-light mb-6">Welcome to コーダマ - <i>Kōdama</i></div>
-      <div class="flex flex-col gap-4 w-64">
-        <button @click="addTab()" class="flex items-center justify-center gap-3 py-3 px-4 bg-primary hover:bg-accent rounded-xl transition-colors">
-          <span class="text-xl"><i class="fas fa-plus mr-2"></i></span>
+    <div v-if="showWelcomeScreen" class="w-full h-full flex flex-col items-center justify-center bg-secondary text-text-accent p-4">
+      <div class="text-2xl md:text-4xl font-light mb-6 text-center">
+        Welcome to コーダマ - <i>Kōdama</i>
+      </div>
+      <div class="flex flex-col gap-4 w-full max-w-xs mx-auto">
+        <button 
+          @click="addTab()" 
+          class="flex items-center justify-center gap-3 py-3 px-4 bg-primary hover:bg-accent rounded-xl transition-colors w-full"
+        >
+          <i class="fas fa-plus text-xl"></i>
           <span>New File</span>
         </button>
-        <button @click="$emit('open-file-dialog')" class="flex items-center justify-center gap-3 py-3 px-4 bg-primary hover:bg-accent rounded-xl transition-colors">
-          <span class="text-xl"><i class="fas fa-file mr-2"></i></span>
+        <button 
+          @click="$emit('open-file-dialog')" 
+          class="flex items-center justify-center gap-3 py-3 px-4 bg-primary hover:bg-accent rounded-xl transition-colors w-full"
+        >
+          <i class="fas fa-file text-xl"></i>
           <span>Open File</span>
         </button>
       </div>
-      <div class="mt-8 px-6 py-4 bg-primary rounded-xl max-w-md">
-        <div class="text-lg font-medium mb-2">Recent Files</div>
-        <div class="text-sm text-text-secondary">No recent files</div>
-        <!-- Will add logic to display recent files at a later time -->
+      <div class="mt-8 px-4 py-4 bg-primary rounded-xl w-full max-w-md">
+        <div class="text-lg font-medium mb-2 text-center">Recent Files</div>
+        <div class="text-sm text-text-secondary text-center">No recent files</div>
       </div>
     </div>
 
     <!-- Editor -->
-    <div v-else class="w-full h-full overflow-hidden">
+    <div v-else class="w-full h-full overflow-auto">
       <div v-for="tab in tabs" v-show="activeTab === tab.id" :key="tab.id" class="h-full">
         <vue-monaco-editor
           v-if="tab.type === 'editor'"
