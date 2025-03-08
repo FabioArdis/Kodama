@@ -86,22 +86,19 @@ export default {
 </script>
 
 <template>
-  <div v-if="isVisible" class="command-palette-backdrop fixed top-0 left-0 w-full h-full bg-black/50 flex justify-center items-start pt-[54px] z-[1000]">
+  <div v-if="isVisible" class="command-palette-backdrop fixed top-0 left-0 w-full h-full bg-black/50 flex justify-center items-start pt-[69px] z-[1000]">
     <div 
       ref="palette" 
-      class="command-palette w-[450px] max-w-full bg-command-primary rounded-2xl shadow-lg overflow-hidden flex flex-col"
+      class="command-palette w-[450px] max-w-full bg-accent rounded-xl shadow-2xl overflow-hidden flex flex-col border border-border-accent"
       @keydown="handleKeyDown"
     >
-      <div class="command-input-container flex items-center p-3 border-b border-command-border">
-        <div class="command-input-ico mr-2 text-command-text-secondary">
-          <i class="fas fa-search"></i>
-        </div>
+      <div class="command-input-container flex items-center p-1 border-b border-command-border">
         <input
           ref="searchInput"
           type="text"
           v-model="searchQuery"
           placeholder="Type a command or search..."
-          class="command-input bg-transparent border-none text-text-primary text-base w-full outline-none py-2"
+          class="bg-primary pl-2 rounded-2xl p-1 text-xs command-input border-none text-text-primary w-full outline-none"
           autofocus
         />
       </div>
@@ -109,14 +106,14 @@ export default {
         <div
           v-for="(command, index) in filteredCommands"
           :key="command.id"
-          :class="['command-item flex items-center p-2.5 cursor-pointer hover:bg-command-hover', { 'bg-command-selected': index === selectedIndex }]"
+          :class="['command-item flex items-center pl-2 pr-3 pt-1 pb-1 mx-1 my-1 rounded-2xl cursor-pointer hover:bg-accent-hover', { 'bg-command-selected': index === selectedIndex }]"
           @click="executeCommand(command)"
         >
           <div class="command-item-icon mr-3 flex items-center justify-center w-5 h-5 text-command-text-secondary" v-if="command.icon">
             <component :is="command.icon" />
           </div>
           <div class="command-item-content flex-grow">
-            <div class="command-title text-sm text-command-text-primary">{{ command.title }}</div>
+            <div class="command-title text-xs text-command-text-primary">{{ command.title }}</div>
             <div class="command-description text-xs text-command-text-secondary mt-0.5" v-if="command.description">
               {{ command.description }}
             </div>

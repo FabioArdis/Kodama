@@ -278,7 +278,7 @@ export default {
       </span>
     </div>
 
-    <div class="border-t border-border-secondary my-1.5"></div>
+    <div class="border-t border-border-accent my-1.5"></div>
     
     <!-- Search input and button -->
     <div class="flex space-x-2 mb-3">
@@ -369,7 +369,7 @@ export default {
         class="mb-4 bg-primary rounded overflow-hidden"
       >
         <div 
-          class="bg-accent px-3 py-2 flex justify-between items-center cursor-pointer hover:bg-neutral-600"
+          class="bg-accent px-3 py-2 flex justify-between items-center cursor-pointer hover:bg-accent-hover"
           @click="handleOpenFile(result)"
         >
           <span class="text-text-primary truncate">{{ result.file_path }}</span>

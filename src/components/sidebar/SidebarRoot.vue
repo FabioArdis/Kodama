@@ -24,6 +24,9 @@ export default {
       recentProjects: [],
       currentProject: null,
       projectFiles: [],
+      startX: 0,
+      initialWidth: 0,
+      minWidth: 450,
       sidebarWidth: 256,
       isResizing: false,
       menus: {
@@ -62,14 +65,18 @@ export default {
     },
     startResize(event) {
       this.isResizing = true;
-      event.preventDefault();
+      this.startX = event.clientX;
+      this.initialWidth = this.sidebarWidth;
+      event.preventDefault(); 
     },
+
     handleMouseMove(event) {
       if (!this.isResizing) return;
       
-      const newWidth = event.clientX;
+      const deltaX = event.clientX - this.startX;
+      const newWidth = Math.max(this.minWidth, this.initialWidth + deltaX);
       
-      if (newWidth >= 200 && newWidth <= 500) {
+      if (newWidth <= 500) {
         this.sidebarWidth = newWidth;
         localStorage.setItem('sidebarWidth', newWidth);
         this.$emit("widthChanged", this.sidebarWidth);
@@ -325,7 +332,7 @@ export default {
     <transition name="slide">
       <div
         v-if="expanded"
-        class="bg-secondary rounded-4xl overflow-auto custom-scrollbar relative"
+        class="left-2 border border-border-accent bg-secondary rounded-4xl overflow-auto custom-scrollbar relative shadow-lg select-none"
         :style="{ width: `${sidebarWidth}px` }"
       >
         <div class="p-2 rounded-4xl h-full">
@@ -409,6 +416,6 @@ export default {
 
 .custom-scrollbar {
   scrollbar-width: thin !important;
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent !important;
+  scrollbar-color: var(--ide-theme-accent) transparent !important;
 }
 </style>

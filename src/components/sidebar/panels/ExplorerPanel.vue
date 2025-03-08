@@ -106,7 +106,7 @@ export default {
       </div>
     </div>
     
-    <div class="border-t border-border-secondary my-1.5"></div>
+    <div class="border-t border-border-accent my-1.5"></div>
     
     <div v-if="!currentProject" class="px-2 py-2 text-text-secondary text-sm">
       <div class="flex flex-col space-y-2">

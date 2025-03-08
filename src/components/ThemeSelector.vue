@@ -28,7 +28,7 @@ function onThemeChange() {
         id="theme-select"
         v-model="selectedTheme" 
         @change="onThemeChange"
-        class="block px-3 py-2 bg-accent hover:bg-accent-hover border-accent rounded-md shadow-sm 
+        class="block w-full px-3 py-2 bg-accent hover:bg-accent-hover border-accent rounded-md shadow-sm 
                focus:outline-none 
                transition duration-200 ease-in-out"
       >

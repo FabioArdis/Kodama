@@ -20,8 +20,14 @@ import { open } from "@tauri-apps/plugin-dialog";
 
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
+import { useSettingsStore } from "./stores/settings";
+
 export default {
   components: { MenuBar, SidebarRoot, Editor, Chat, CommandPalette, ThemeSelector },
+  setup() {
+    const settingsStore = useSettingsStore();
+    return { settingsStore };
+  },
   data() {
     return {
       /** Current application version string */
@@ -54,13 +60,6 @@ export default {
       this.appVersion = "Unknown";
     }
 
-    this.checkOllamaStatus();
-
-    // Set interval to periodically check Ollama connection status
-    this.ollamaStatusInterval = setInterval(() => {
-      this.checkOllamaStatus();
-    }, 30000);
-
     // Register global keyboard shortcuts
     window.addEventListener('keydown', this.handleKeyDown);
     
@@ -84,6 +83,14 @@ export default {
    * Computed properties for the component
    */
   computed: {
+    llmStatus() {
+      const status = this.settingsStore.llmConnection.llmStatus;
+      return status
+    },
+    providerName() {
+      const provider = this.settingsStore.llmConnection.selectedProvider;
+      return provider;
+    },
     /**
      * Determines if the sidebar is currently expanded
      * @returns {boolean} True if sidebar is expanded, false otherwise
@@ -96,7 +103,7 @@ export default {
      * @returns {string} The selected model name or "defaultModel" if not set
      */
     selectedModel() {
-      return localStorage.getItem("selectedModel") || "defaultModel";
+      return this.settingsStore.llmConnection.selectedModel || "No model selected";
     },
     /**
      * Calculates the left margin for the editor based on sidebar state
@@ -237,21 +244,6 @@ export default {
     },
     
     /**
-     * Checks the status of the Ollama API connection 
-     * Updates ollamaStatus state with the result: "online", "offline", or "checking"
-     */
-    async checkOllamaStatus() {
-      try {
-        this.ollamaStatus = "checking";
-        const response = await ollama.list();
-        this.ollamaStatus = response ? "online" : "offline";
-      } catch (error) {
-        console.error("Ollama status check failed:", error);
-        this.ollamaStatus = "offline";
-      }
-    },
-    
-    /**
      * Creates a new file by delegating to the editor component
      */
     handleNewFile() {
@@ -301,7 +293,7 @@ export default {
     <MenuBar v-if="!immersiveMode" @newFile="handleNewFile" @openFileDialog="handleOpenFileDialog" @openSettings="handleOpenSettings" @openProject="handleOpenProject" />
     
     <!-- Components in the middle -->
-    <div class="flex flex-1 overflow-hidden relative"
+    <div class="flex flex-1 overflow-hidden relative p-3"
       :class="{
         'justify-center items-center': immersiveMode,
         'bg-editor-background': immersiveMode
@@ -324,7 +316,7 @@ export default {
           width: immersiveMode ? '80%' : 'auto',
           maxWidth: immersiveMode ? '100%' : 'none'
         }" 
-        class="flex-grow transition-all duration-300" 
+        class="flex-grow transition-all duration-300 border border-border-accent shadow-lg" 
         :class="{
           'shadow-2xl': immersiveMode,
           'mx-auto': immersiveMode
@@ -337,25 +329,24 @@ export default {
     </div>
 
     <!-- Status bar, will probably become a component later on -->
-    <div v-if="!immersiveMode" class="border-t border-border-primary my-2"></div>
     
-    <div v-if="!immersiveMode" class="bg-primary text-statusbar-text-primary p-1 text-xs flex items-center justify-between select-none relative mx-4 bottom-1">
+    <div v-if="!immersiveMode" class="bg-secondary text-text-primary shadow-md px-4 py-1 text-xs flex items-center justify-between select-none border-t border-border-accent">
       <div class="flex items-center space-x-2">
-        <span>Kōdama v{{appVersion}}</span>
+        <span class="font-normal">Kōdama v{{appVersion}}</span>
       </div>
       <div class="flex items-center space-x-4">
         <div class="flex items-center">
-          <div 
+          <div
             :class="{
               'w-2 h-2 rounded-full mr-2': true,
-              'bg-green-500': ollamaStatus === 'online',
-              'bg-red-500': ollamaStatus === 'offline',
-              'bg-yellow-500 animate-pulse': ollamaStatus === 'checking'
+              'bg-green-400': llmStatus.status === 'online',
+              'bg-red-400': llmStatus.status === 'offline',
+              'bg-yellow-400 animate-pulse': llmStatus.status === 'checking'
             }"
           ></div>
-          <span>Ollama - {{ ollamaStatus }}</span>
+          <span>{{providerName}} · {{ llmStatus.status }}</span>
         </div>
-        <span>Model: {{selectedModel}}</span>
+        <div class="px-2 py-0.5 rounded-xl bg-accent">{{selectedModel}}</div>
       </div>
     </div>
     

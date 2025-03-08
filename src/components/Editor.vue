@@ -63,6 +63,50 @@ export default {
     }
   },
   methods: {
+    showToast(message, type) {
+      const toast = document.createElement("div");
+      
+      let toastClass = "absolute left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-4xl border shadow-lg flex items-center justify-between opacity-0 transition-opacity duration-300";
+      
+      if (type === 'error') {
+        toastClass += " bg-red-100 text-red-800 border-red-300";
+      } else {
+        toastClass += " bg-secondary text-text-primary border-border-accent";
+      }
+      
+      toast.className = toastClass;
+      
+      const messageSpan = document.createElement("span");
+      messageSpan.innerText = message;
+      
+      const closeDiv = document.createElement("div");
+      closeDiv.className = "ml-2 font-medium hover:bg-primary rounded-4xl cursor-pointer";
+      closeDiv.innerHTML = "×";
+      closeDiv.onclick = () => closeToast();
+      
+      toast.appendChild(messageSpan);
+      toast.appendChild(closeDiv);
+      
+      const container = document.querySelector(".relative");
+      container?.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.classList.add("opacity-100");
+      }, 10);
+      
+      const closeToast = () => {
+        toast.classList.remove("opacity-100");
+        toast.classList.add("opacity-0");
+        setTimeout(() => container?.removeChild(toast), 300);
+      };
+      
+      const autoCloseTimeout = setTimeout(() => closeToast(), 3000);
+      
+      closeDiv.addEventListener("click", () => {
+        clearTimeout(autoCloseTimeout);
+      });
+    },
+
     handleTabMouseDown(event, tabId) {
       // If the use is pressing the middle mouse button
       if (event.button === 1) {
@@ -277,6 +321,7 @@ export default {
       }
 
       if (!this.editor) {
+        this.showToast("ERROR: Editor instance not available.", "error");
         console.error("Editor instance not available after waiting");
         return false;
       }
@@ -326,15 +371,16 @@ export default {
 <template>
 
   <!-- Tabs -->
-  <main class="flex-1 relative w-full h-full overflow-hidden flex flex-col rounded-4xl">
+  <main class="flex-1 relative w-full h-full overflow-hidden flex flex-col rounded-4xl select-none">
     <div class="bg-secondary p-2 flex items-center h-12">
       <div v-for="tab in tabs" :key="tab.id" class="mx-1 text-xs px-4 py-2 cursor-pointer" 
-           :class="{ 'rounded-xl outline outline-accent': activeTab === tab.id }"
-           @mousedown="handleTabMouseDown($event, tab.id)">
-        <span @click="activeTab = tab.id">{{ tab.name }}</span>
+           :class="{ 'bg-accent-hover rounded-xl outline outline-accent shadow-md': activeTab === tab.id }"
+           @mousedown="handleTabMouseDown($event, tab.id)"
+           @click="activeTab = tab.id">
+        <span>{{ tab.name }}</span>
         <span class="ml-2 cursor-pointer" @click.stop="closeTab(tab.id)">&times;</span>
       </div>
-      <button @click="addTab()" class="ml-2 text-xs px-3 py-1 rounded-lg bg-primary hover:bg-accent">
+      <button @click="addTab()" class="ml-2 text-xs px-2 py-1 rounded-4xl bg-primary hover:bg-accent transition-colors border border-border-accent">
         <span>+</span>
       </button>
     </div>
@@ -348,20 +394,20 @@ export default {
       <div class="flex flex-col gap-4 w-full max-w-xs mx-auto">
         <button 
           @click="addTab()" 
-          class="flex items-center justify-center gap-3 py-3 px-4 bg-primary hover:bg-accent rounded-xl transition-colors w-full"
+          class="flex items-center justify-center gap-3 py-3 px-4 bg-primary hover:bg-accent rounded-xl transition-colors w-full border border-border-accent shadow-md"
         >
           <i class="fas fa-plus text-xl"></i>
           <span>New File</span>
         </button>
         <button 
           @click="$emit('open-file-dialog')" 
-          class="flex items-center justify-center gap-3 py-3 px-4 bg-primary hover:bg-accent rounded-xl transition-colors w-full"
+          class="flex items-center justify-center gap-3 py-3 px-4 bg-primary hover:bg-accent rounded-xl transition-colors w-full border border-border-accent shadow-md"
         >
           <i class="fas fa-file text-xl"></i>
           <span>Open File</span>
         </button>
       </div>
-      <div class="mt-8 px-4 py-4 bg-primary rounded-xl w-full max-w-md">
+      <div class="mt-8 px-4 py-4 bg-primary rounded-xl w-full max-w-md border border-border-accent shadow-md">
         <div class="text-lg font-medium mb-2 text-center">Recent Files</div>
         <div class="text-sm text-text-secondary text-center">No recent files</div>
       </div>

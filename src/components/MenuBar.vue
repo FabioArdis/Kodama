@@ -52,11 +52,11 @@ export default {
 <template>
   <header data-tauri-drag-region class="titlebar bg-primary text-text-primary p-2 flex items-center select-none relative justify-between">
     <div class="flex items-center">
-      <div class="px-4 font-semibold text-lg">コーダマ</div>
+      <div class="px-2 font-semibold text-lg">コーダマ</div>
 
-      <nav class="flex space-x-4">
+      <nav class="px-4 flex space-x-4">
         <div class="relative group">
-          <button class="px-3 py-1 hover:bg-accent rounded">File</button>
+          <button class="px-3 py-1 bg-secondary hover:bg-accent transition-colors rounded-2xl shadow-lg border border-border-accent">File</button>
           <div
               class="absolute left-0 min-w-[150px] hidden group-hover:block outline-2 outline-accent bg-secondary shadow-lg rounded-md z-50"
           >
@@ -76,7 +76,7 @@ export default {
         </div>
 
         <div class="relative group">
-          <button class="px-3 py-1 hover:hover:bg-accent rounded">Edit</button>
+          <button class="px-3 py-1 bg-secondary hover:hover:bg-accent transition-colors rounded-2xl shadow-lg border border-border-accent">Edit</button>
           <div
               class="absolute left-0 min-w-[150px] hidden group-hover:block outline-2 outline-accent bg-secondary shadow-lg rounded-md z-50"
           >
@@ -93,14 +93,14 @@ export default {
       </nav>
     </div>
 
-    <div class=" rounded-4xl bg-secondary px-1 py-1">
-      <div @click="minimize()" class="titlebar-button hover:bg-accent rounded-4xl" id="titlebar-minimize">
+    <div class=" rounded-4xl bg-secondary px-1 py-1 shadow-lg border border-border-accent">
+      <div @click="minimize()" class="titlebar-button hover:bg-accent transition-colors rounded-4xl" id="titlebar-minimize">
         <i class="fas fa-minus"></i>
       </div>
-      <div @click="toggleMaximize()" class="titlebar-button hover:bg-accent rounded-4xl" id="titlebar-maximize">
+      <div @click="toggleMaximize()" class="titlebar-button hover:bg-accent transition-colors rounded-4xl" id="titlebar-maximize">
         <i class="fas fa-square"></i>
       </div>
-      <div @click="exitApp()" class="titlebar-button hover:bg-accent rounded-4xl" id="titlebar-close">
+      <div @click="exitApp()" class="titlebar-button hover:bg-accent transition-colors rounded-4xl" id="titlebar-close">
         <i class="fas fa-times"></i>
       </div>
     </div>

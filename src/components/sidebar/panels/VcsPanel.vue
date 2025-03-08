@@ -11,7 +11,7 @@
       </span>
     </div>
 
-    <div class="border-t border-border-secondary my-1.5"></div>
+    <div class="border-t border-border-accent my-1.5"></div>
     
     <!-- Work in progress -->
   </div>

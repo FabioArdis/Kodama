@@ -1,335 +1,248 @@
 <script lang="ts">
+import { computed, onMounted, ref } from 'vue';
 import { LLMClient, PROVIDERS } from './lib/llm-client';
-import type { ModelParameters } from './lib/llm-client';
 import ThemeSelector from './components/ThemeSelector.vue';
+import { useSettingsStore } from './stores/settings.ts';
 
-type LLMStatus = {
+export type LLMStatus = {
   status: string;
   message: string;
   lastChecked: string;
 };
 
-type QuickPrompt = {
+export type QuickPrompt = {
   title: string;
   content: string;
 };
 
-interface ChatSettings {
-  showTimestamps: boolean;
-  showMessageInfo: boolean;
-  autoScroll: boolean;
-  quickPrompts: QuickPrompt[];
-  editorHeight: number;
-}
-
-interface UISettings {
-  fontSize: string;
-  codeBlockTheme: string;
-  markdownRenderer: string;
-  compactView: boolean;
-  sidebarPosition: string;
-}
-
-interface DataSettings {
-  enableHistory: boolean;
-  autoSaveChats: boolean;
-  saveFormat: string;
-  maxStoredChats: number;
-  exportIncludeMetadata: boolean;
-}
-
 export default {
   components: { ThemeSelector },
-  data() {
-    return {
-      llmClient: null as LLMClient | null,
-      llmStatus: {
-        status: "checking",
-        message: "Checking LLM connection..."
-      } as LLMStatus,
-      availableModels: [] as string[],
-      selectedModel: localStorage.getItem("selectedModel") || "",
-      selectedProvider: localStorage.getItem("selectedProvider") || PROVIDERS.OLLAMA,
-      baseUrl: localStorage.getItem("baseUrl") || "http://localhost:11434",
-      isRefreshing: false,
-      providers: Object.values(PROVIDERS),
-      activeCategory: 'llm-connection',  // Default active category
-      
-      // Model Parameters
-      modelParameters: {
-        temperature: parseFloat(localStorage.getItem("temperature") || "0.7"),
-        top_p: parseFloat(localStorage.getItem("top_p") || "0.9"),
-        top_k: parseInt(localStorage.getItem("top_k") || "40"),
-        presence_penalty: parseFloat(localStorage.getItem("presence_penalty") || "0"),
-        frequency_penalty: parseFloat(localStorage.getItem("frequency_penalty") || "0"),
-        max_tokens: parseInt(localStorage.getItem("max_tokens") || "2048"),
-        repeat_penalty: parseFloat(localStorage.getItem("repeat_penalty") || "1.1"),
-      } as ModelParameters,
-      
-      // Chat Interface Settings
-      chatSettings: {
-        showTimestamps: localStorage.getItem("showTimestamps") === "true" || true,
-        showMessageInfo: localStorage.getItem("showMessageInfo") === "true" || true,
-        autoScroll: localStorage.getItem("autoScroll") === "true" || true,
-        quickPrompts: JSON.parse(localStorage.getItem("quickPrompts") || "[]"),
-        editorHeight: parseInt(localStorage.getItem("editorHeight")|| "150"),
-      } as ChatSettings,
-      
-      // UI Settings
-      uiSettings: {
-        fontSize: localStorage.getItem("fontSize") || "medium",
-        codeBlockTheme: localStorage.getItem("codeBlockTheme") || "default",
-        markdownRenderer: localStorage.getItem("markdownRenderer") || "default",
-        compactView: localStorage.getItem("compactView") === "true" || false,
-        sidebarPosition: localStorage.getItem("sidebarPosition") || "left",
-      } as UISettings,
+  setup() {
+    const settingsStore = useSettingsStore();
+    const llmClient = ref<LLMClient | null>(null);
+    const llmStatus = computed(() => settingsStore.llmConnection.llmStatus);
+    const availableModels = ref<string[]>([]);
+    const isRefreshing = ref(false);
+    const activeCategory = ref("llm-connection");
 
-      // Data Management Settings
-      dataSettings: {
-        enableHistory: localStorage.getItem("enableHistory") === "true" || true,
-        autoSaveChats: localStorage.getItem("autoSaveChats") === "true" || true,
-        saveFormat: localStorage.getItem("saveFormat") || "json",
-        maxStoredChats: parseInt(localStorage.getItem("maxStoredChats") || "50"),
-        exportIncludeMetadata: localStorage.getItem("exportIncludeMetadata") === "true" || true,
-      } as DataSettings,
-      
-      // New quick prompt input
-      newQuickPromptTitle: "",
-      newQuickPromptContent: "",
-      
-      // Custom stop sequences
-      stopSequences: JSON.parse(localStorage.getItem("stopSequences") || "[]"),
-      newStopSequence: "",
-    };
-  },
-  created() {
-    this.initClient();
-    this.checkLLMStatus();
-  },
-  methods: {
-    eraseHistory(): void {
-      localStorage.removeItem("chatHistory");
-    },
-    setActiveCategory(category: string) {
-      this.activeCategory = category;
-    },
-    initClient(): void {
+    const newQuickPromptTitle = ref("");
+    const newQuickPromptContent = ref("");
+    const newStopSequence = ref("");
+
+    const providers = Object.values(PROVIDERS);
+
+    const initClient = () => {
+      console.log("Inizializzando client");
       try {
-        this.llmClient = new LLMClient(this.selectedProvider);
-        if (this.llmClient) {
-          this.llmClient.setBaseUrl(this.baseUrl);
+        llmClient.value = new LLMClient(settingsStore.llmConnection.selectedProvider);
+        if (llmClient.value) {
+          llmClient.value.setBaseUrl(settingsStore.llmConnection.baseUrl);
         }
       } catch (error: unknown) {
         console.error("Error initializing LLM client:", error);
-        this.llmStatus = { 
-          status: "error", 
-          message: "Error initializing client: " + (error instanceof Error ? error.message : String(error)),
-          lastChecked: "Never"
-        };
+        settingsStore.updateLLMConnection({
+            llmStatus: { 
+            status: "error", 
+            message: "Error initializing client: " + (error instanceof Error ? error.message : String(error)),
+            lastChecked: "Never"
+          }
+        });
       }
-    },
-    
-    async checkLLMStatus(): Promise<void> {
-      this.llmStatus = { status: "checking", message: "Checking LLM connection...", lastChecked: new Date().toLocaleString() };
+    };
+
+    const checkLLMStatus = async () => {
+      settingsStore.updateLLMConnection({
+        llmStatus: { 
+          status: "checking", 
+          message: "Checking LLM connection...",
+          lastChecked: new Date().toLocaleString()
+        }
+      });
 
       try {
         const timeoutPromise = new Promise<boolean>((_, reject) => {
           setTimeout(() => reject(new Error("Connection timed out")), 5000);
         });
 
-        if (!this.llmClient) {
+        if (!llmClient.value) {
           throw new Error("LLM client not initialized");
         }
 
         const isRunning = await Promise.race([
-          this.llmClient.isRunning(),
+          llmClient.value.isRunning(),
           timeoutPromise
         ]);
 
         if (isRunning) {
-          this.llmStatus = { 
-            status: "online", 
-            message: `${this.selectedProvider} is running`,
-            lastChecked: this.llmStatus.lastChecked
-          };
-          this.fetchAvailableModels();
+          settingsStore.updateLLMConnection({
+            llmStatus: { 
+              status: "online", 
+              message: `${settingsStore.llmConnection.selectedProvider} is running`,
+              lastChecked: llmStatus.value.lastChecked
+            }
+          });
+          fetchAvailableModels();
         } else {
-          this.llmStatus = { 
-            status: "offline", 
-            message: `${this.selectedProvider} is not running`,
-            lastChecked: this.llmStatus.lastChecked
-          };
+          settingsStore.updateLLMConnection({
+            llmStatus: { 
+              status: "offline", 
+              message: `${settingsStore.llmConnection.selectedProvider} is not running`,
+              lastChecked: llmStatus.value.lastChecked
+            }
+          });
         }
       } catch (error: unknown) {
         console.error("LLM connection error:", error);
-        this.llmStatus = { 
-          status: "offline", 
-          message: error instanceof Error && error.message === "Connection timed out"
-            ? "Connection timed out"
-            : `${this.selectedProvider} is not running`,
-          lastChecked: this.llmStatus.lastChecked
-        };
+        settingsStore.updateLLMConnection({
+          llmStatus: { 
+            status: "offline", 
+            message: error instanceof Error && error.message === "Connection timed out"
+              ? "Connection timed out"
+              : `${settingsStore.llmConnection.selectedProvider} is not running`,
+            lastChecked: llmStatus.value.lastChecked
+          }
+        });
       }
-    },
+    };
 
-    async fetchAvailableModels(): Promise<void> {
-      this.isRefreshing = true;
+    const fetchAvailableModels = async () => {
+      isRefreshing.value = true;
 
       try {
-        if (!this.llmClient) {
+        if (!llmClient.value) {
           throw new Error("LLM client not initialized");
         }
         
-        const models = await this.llmClient.listModels();
-        this.availableModels = models.map((model: any) => model.name);
+        const models = await llmClient.value.listModels();
+        availableModels.value = models.map((model: any) => model.name);
 
-        if (!this.selectedModel && this.availableModels.length > 0) {
-          this.selectedModel = this.availableModels[0];
+        if (!settingsStore.llmConnection.selectedModel && availableModels.value.length > 0) {
+          settingsStore.updateLLMConnection({ selectedModel: availableModels.value[0] });
         }
       } catch (error: unknown) {
         console.error("Error fetching models:", error);
-        this.availableModels = [];
+        availableModels.value = [];
       } finally {
-        this.isRefreshing = false;
+        isRefreshing.value = false;
       }
-    },
+    };
 
-    async refreshModels(): Promise<void> {
-      if (this.isRefreshing) return;
+    const refreshModels = async () => {
+      if (isRefreshing.value) return;
 
-      await this.checkLLMStatus();
-      if (this.llmStatus.status === "online") {
-        await this.fetchAvailableModels();
+      await checkLLMStatus();
+      if (llmStatus.value.status === "online") {
+        await fetchAvailableModels();
       }
-    },
+    };
+
+    const updateProvider = () => {
+      initClient();
+      checkLLMStatus();
+    };
     
-    updateProvider(): void {
-      this.initClient();
-      this.checkLLMStatus();
-    },
-    
-    updateBaseUrl(): void {
-      if (this.baseUrl && this.llmClient) {
-        this.llmClient.setBaseUrl(this.baseUrl);
-        this.checkLLMStatus();
+    const updateBaseUrl = () => {
+      if (settingsStore.llmConnection.baseUrl && llmClient.value) {
+        llmClient.value.setBaseUrl(settingsStore.llmConnection.baseUrl);
+        checkLLMStatus();
       }
-    },
-    
-    addQuickPrompt(): void {
-      if (this.newQuickPromptTitle && this.newQuickPromptContent) {
-        this.chatSettings.quickPrompts.push({
-          title: this.newQuickPromptTitle,
-          content: this.newQuickPromptContent
+    };
+
+    const addQuickPrompt = () => {
+      if (newQuickPromptTitle.value && newQuickPromptContent.value) {
+        settingsStore.addQuickPrompt({
+          id: 0,
+          title: newQuickPromptTitle.value,
+          content: newQuickPromptContent.value
         });
-        this.newQuickPromptTitle = "";
-        this.newQuickPromptContent = "";
+        newQuickPromptTitle.value = "";
+        newQuickPromptContent.value = "";
       }
-    },
+    };
     
-    removeQuickPrompt(index: number): void {
-      this.chatSettings.quickPrompts.splice(index, 1);
-    },
-    
-    addStopSequence(): void {
-      if (this.newStopSequence && !this.stopSequences.includes(this.newStopSequence)) {
-        this.stopSequences.push(this.newStopSequence);
-        this.newStopSequence = "";
+    const addStopSequence = () => {
+      if (newStopSequence.value && !settingsStore.stopSequences.includes(newStopSequence.value)) {
+        settingsStore.addStopSequence(newStopSequence.value);
+        newStopSequence.value = "";
       }
-    },
-    
-    removeStopSequence(index: number) {
-      this.stopSequences.splice(index, 1);
-    },
-    
-    resetToDefaults(): void {
-      this.modelParameters = {
-        temperature: 0.7,
-        top_p: 0.9,
-        top_k: 40,
-        presence_penalty: 0,
-        frequency_penalty: 0,
-        max_tokens: 2048,
-        repeat_penalty: 1.1,
-      };
-      
-      this.chatSettings = {
-        showTimestamps: true,
-        showMessageInfo: true,
-        autoScroll: true,
-        quickPrompts: [],
-        editorHeight: 150,
-      };
-      
-      this.uiSettings = {
-        fontSize: "medium",
-        codeBlockTheme: "default",
-        markdownRenderer: "default",
-        compactView: false,
-        sidebarPosition: "left",
-      };
-      
-      this.dataSettings = {
-        enableHistory: true,
-        autoSaveChats: true,
-        saveFormat: "json",
-        maxStoredChats: 50,
-        exportIncludeMetadata: true,
-      };
-      
-      this.stopSequences = [];
-      
-      this.showToast("Settings reset to defaults");
-    },
-    
-    saveSettings(): void {
-      // LLM Connection Settings
-      localStorage.setItem("selectedModel", this.selectedModel);
-      localStorage.setItem("selectedProvider", this.selectedProvider);
-      localStorage.setItem("baseUrl", this.baseUrl);
-      
-      // Model Parameters
-      for (const [key, value] of Object.entries(this.modelParameters)) {
-        localStorage.setItem(key, value.toString());
-      }
-      
-      // Chat Interface Settings
-      for (const [key, value] of Object.entries(this.chatSettings)) {
-        if (key === "quickPrompts") {
-          localStorage.setItem(key, JSON.stringify(value));
-        } else {
-          localStorage.setItem(key, value.toString());
-        }
-      }
-      
-      // UI Settings
-      for (const [key, value] of Object.entries(this.uiSettings)) {
-        localStorage.setItem(key, value.toString());
-      }
-      
-      // Data Management Settings
-      for (const [key, value] of Object.entries(this.dataSettings)) {
-        localStorage.setItem(key, value.toString());
-      }
-      
-      // Stop Sequences
-      localStorage.setItem("stopSequences", JSON.stringify(this.stopSequences));
-      
-      console.log("Settings saved successfully");
-      this.showToast("Settings saved successfully");
-    },
-    
-    showToast(message: string) {
+    };
+
+    const showToast = (message: string) => {
       const toast = document.createElement("div");
-      toast.className = "absolute left-1/2 transform -translate-x-1/2 bg-secondary text-text-primary px-4 py-2 rounded-4xl shadow-lg";
-      toast.innerText = message;
+      toast.className = "absolute left-1/2 transform -translate-x-1/2 bg-secondary text-text-primary px-4 py-2 rounded-4xl border border-border-accent shadow-lg flex items-center justify-between opacity-0 transition-opacity duration-300";
+      
+      const messageSpan = document.createElement("span");
+      messageSpan.innerText = message;
+      
+      const closeDiv = document.createElement("div");
+      closeDiv.className = "ml-2 font-medium hover:bg-primary rounded-4xl cursor-pointer";
+      closeDiv.innerHTML = "×";
+      closeDiv.onclick = () => closeToast();
+      
+      toast.appendChild(messageSpan);
+      toast.appendChild(closeDiv);
+      
       const container = document.querySelector(".relative");
       container?.appendChild(toast);
-
+      
       setTimeout(() => {
-        toast.classList.add("opacity-0", "transition-opacity", "duration-500");
-        setTimeout(() => container?.removeChild(toast), 500);
-      }, 3000);
-    }
+        toast.classList.add("opacity-100");
+      }, 10);
+      
+      const closeToast = () => {
+        toast.classList.remove("opacity-100");
+        toast.classList.add("opacity-0");
+        setTimeout(() => container?.removeChild(toast), 300);
+      };
+      
+      const autoCloseTimeout = setTimeout(() => closeToast(), 3000);
+      
+      closeDiv.addEventListener("click", () => {
+        clearTimeout(autoCloseTimeout);
+      });
+    };
+
+    const eraseHistory = () => {
+      localStorage.removeItem("chatHistory");
+    };
+
+    onMounted(() => {
+      initClient();
+      checkLLMStatus();
+    });
+
+    return {
+      llmStatus,
+      availableModels,
+      isRefreshing,
+      activeCategory,
+      newQuickPromptTitle,
+      newQuickPromptContent,
+      newStopSequence,
+      providers,
+      
+      // Store access
+      settingsStore,
+      
+      // Methods
+      setActiveCategory: (category: string) => activeCategory.value = category,
+      refreshModels,
+      updateProvider,
+      updateBaseUrl,
+      addQuickPrompt,
+      addStopSequence,
+      showToast,
+      eraseHistory,
+      checkLLMStatus,
+      saveSettings: () => {
+        settingsStore.saveAllToLocalStorage();
+        showToast("Settings saved.");
+      }, 
+      resetSettings: () => {
+        settingsStore.resetToDefaults();
+        showToast("Settings reset to default.");
+      }
+    };
   }
 };
 </script>
@@ -339,9 +252,9 @@ export default {
 
     <!-- Sidebar Navigation -->
     <div class="w-64 bg-secondary border-r border-border-accent h-full overflow-y-auto">
-      <h1 class="text-xl font-bold p-4 border-b border-border-accent">Settings</h1>
+      <h1 class="text-xl font-bold p-4 border-b border-border-accent select-none">Settings</h1>
       
-      <nav class="py-2">
+      <nav class="py-2 select-none">
         <button 
           @click="setActiveCategory('llm-connection')" 
           class="w-full px-4 py-3 text-left transition-colors flex items-center space-x-2"
@@ -409,17 +322,17 @@ export default {
           <h2 class="text-xl font-bold">LLM Connection</h2>
           <button 
             @click="checkLLMStatus" 
-            class="px-3 py-1 bg-primary hover:bg-accent-hover rounded-md shadow-xl border border-border-accent transition-colors text-sm flex items-center space-x-1"
+            class="px-3 py-1 bg-primary hover:bg-accent-hover rounded-md shadow-lg border border-border-accent transition-colors text-sm flex items-center space-x-1"
           >
             <div 
               :class="{
                 'w-2 h-2 rounded-full': true,
-                'bg-green-500': llmStatus.status === 'online',
-                'bg-red-500': llmStatus.status === 'offline' || llmStatus.status === 'error',
-                'bg-yellow-500 animate-pulse': llmStatus.status === 'checking'
+                'bg-green-500': settingsStore.llmConnection.llmStatus.status === 'online',
+                'bg-red-500': settingsStore.llmConnection.llmStatus.status === 'offline' || settingsStore.llmConnection.llmStatus.status === 'error',
+                'bg-yellow-500 animate-pulse': settingsStore.llmConnection.llmStatus.status === 'checking'
               }"
             ></div>
-            <span>{{ llmStatus.status === 'checking' ? 'Checking...' : 'Check Connection' }}</span>
+            <span>{{ settingsStore.llmConnection.llmStatus.status === 'checking' ? 'Checking...' : 'Check Connection' }}</span>
           </button>
         </div>
 
@@ -429,7 +342,7 @@ export default {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           <!-- LLM Provider Selection -->
-          <div class="bg-primary rounded-lg p-4 shadow-xl border border-border-accent">
+          <div class="bg-primary rounded-lg p-4 shadow-lg border border-border-accent">
             <h3 class="font-semibold mb-3">Provider Settings</h3>
             
             <div class="space-y-3">
@@ -437,7 +350,7 @@ export default {
                 <label for="provider" class="block mb-1 text-sm font-medium">Provider:</label>
                 <select 
                   id="provider" 
-                  v-model="selectedProvider" 
+                  v-model="settingsStore.llmConnection.selectedProvider" 
                   @change="updateProvider"
                   class="w-full bg-accent border border-border-accent text-text-primary p-2 rounded-md focus:outline-none focus:ring-1 text-sm"
                 >
@@ -446,11 +359,11 @@ export default {
               </div>
               
               <div>
-                <label for="baseUrl" class="block mb-1 text-sm font-medium">Base URL:</label>
+                <label for="baseUrl" class="block mb-1 text-sm font-medium ">Base URL:</label>
                 <div class="flex gap-2">
                   <input 
                     id="baseUrl" 
-                    v-model="baseUrl" 
+                    v-model="settingsStore.llmConnection.baseUrl" 
                     type="text" 
                     placeholder="http://localhost:11434"
                     class="flex-1 bg-accent border border-border-accent text-text-primary p-2 rounded-md focus:outline-none focus:ring-1 text-sm"
@@ -467,7 +380,7 @@ export default {
           </div>
 
           <!-- LLM Status & Connection -->
-          <div class="bg-primary rounded-lg p-4 shadow-xl border border-border-accent">
+          <div class="bg-primary rounded-lg p-4 shadow-lg border border-border-accent">
             <h3 class="font-semibold mb-3">Connection Status</h3>
             
             <div class="flex items-center mb-3">
@@ -489,7 +402,7 @@ export default {
         </div>
 
         <!-- Model Selection -->
-        <div class="bg-primary rounded-lg p-4 shadow-xl border border-border-accent">
+        <div class="bg-primary rounded-lg p-4 shadow-lg border border-border-accent">
           <div class="flex justify-between items-center mb-3">
             <h3 class="font-semibold">Model Selection</h3>
             <button 
@@ -507,7 +420,7 @@ export default {
           <div class="flex gap-2">
             <select 
               id="model" 
-              v-model="selectedModel" 
+              v-model="settingsStore.llmConnection.selectedModel" 
               class="flex-1 bg-accent border border-border-accent text-text-primary p-2 rounded-md focus:outline-none focus:ring-1 text-sm"
               :disabled="availableModels.length === 0 || llmStatus.status !== 'online'"
             >
@@ -532,20 +445,20 @@ export default {
         <div class="border-t border-border-accent my-4"></div>
 
         <!-- Basic Parameters -->
-        <div class="bg-primary rounded-lg p-4 shadow-xl border border-border-accent">
+        <div class="bg-primary rounded-lg p-4 shadow-lg border border-border-accent">
           <h3 class="font-semibold mb-3">Basic Parameters</h3>
           
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label for="temperature" class="block mb-1 text-sm font-medium">Temperature: {{ modelParameters.temperature }}</label>
+              <label for="temperature" class="block mb-1 text-sm font-medium">Temperature: {{ settingsStore.modelParameters.temperature }}</label>
               <input 
                 id="temperature" 
-                v-model="modelParameters.temperature" 
+                v-model="settingsStore.modelParameters.temperature" 
                 type="range" 
                 min="0" 
                 max="2" 
                 step="0.05"
-                class="w-full"
+                class="w-full accent-accent"
               />
               <div class="flex justify-between text-xs text-text-secondary mt-1">
                 <span>Deterministic (0)</span>
@@ -557,7 +470,7 @@ export default {
               <label for="maxTokens" class="block mb-1 text-sm font-medium">Max Output Tokens:</label>
               <input 
                 id="maxTokens" 
-                v-model="modelParameters.max_tokens" 
+                v-model="settingsStore.modelParameters.max_tokens" 
                 type="number" 
                 min="128" 
                 max="8192"
@@ -569,36 +482,36 @@ export default {
         </div>
         
         <!-- Sampling Parameters -->
-        <div class="bg-primary rounded-lg p-4 shadow-xl border border-border-accent">
+        <div class="bg-primary rounded-lg p-4 shadow-lg border border-border-accent">
           <div class="flex items-center justify-between mb-3">
             <h3 class="font-semibold">Sampling Parameters</h3>
           </div>
           
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label for="top_p" class="block mb-1 text-sm font-medium">Top-p (Nucleus): {{ modelParameters.top_p }}</label>
+              <label for="top_p" class="block mb-1 text-sm font-medium">Top-p (Nucleus): {{ settingsStore.modelParameters.top_p }}</label>
               <input 
                 id="top_p" 
-                v-model="modelParameters.top_p" 
+                v-model="settingsStore.modelParameters.top_p" 
                 type="range" 
                 min="0.1" 
                 max="1" 
                 step="0.05"
-                class="w-full"
+                class="w-full accent-accent"
               />
               <p class="mt-1 text-xs text-text-secondary">Only sample from the top tokens whose probabilities add up to top_p</p>
             </div>
             
             <div>
-              <label for="top_k" class="block mb-1 text-sm font-medium">Top-k: {{ modelParameters.top_k }}</label>
+              <label for="top_k" class="block mb-1 text-sm font-medium">Top-k: {{ settingsStore.modelParameters.top_k }}</label>
               <input 
                 id="top_k" 
-                v-model="modelParameters.top_k" 
+                v-model="settingsStore.modelParameters.top_k" 
                 type="range" 
                 min="1" 
                 max="100" 
                 step="1"
-                class="w-full"
+                class="w-full accent-accent"
               />
               <p class="mt-1 text-xs text-text-secondary">Only sample from the top-k tokens</p>
             </div>
@@ -606,50 +519,50 @@ export default {
         </div>
         
         <!-- Penalty Parameters -->
-        <div class="bg-primary rounded-lg p-4 shadow-xl border border-border-accent">
+        <div class="bg-primary rounded-lg p-4 shadow-lg border border-border-accent">
           <div class="flex items-center justify-between mb-3">
             <h3 class="font-semibold">Penalty Parameters</h3>
           </div>
           
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label for="repeat_penalty" class="block mb-1 text-sm font-medium">Repeat Penalty: {{ modelParameters.repeat_penalty }}</label>
+              <label for="repeat_penalty" class="block mb-1 text-sm font-medium">Repeat Penalty: {{ settingsStore.modelParameters.repeat_penalty }}</label>
               <input 
                 id="repeat_penalty" 
-                v-model="modelParameters.repeat_penalty" 
+                v-model="settingsStore.modelParameters.repeat_penalty" 
                 type="range" 
                 min="1" 
                 max="2" 
                 step="0.05"
-                class="w-full"
+                class="w-full accent-accent"
               />
               <p class="mt-1 text-xs text-text-secondary">Penalty for repeating tokens (higher values = less repetition)</p>
             </div>
             
             <div>
-              <label for="presence_penalty" class="block mb-1 text-sm font-medium">Presence: {{ modelParameters.presence_penalty }}</label>
+              <label for="presence_penalty" class="block mb-1 text-sm font-medium">Presence: {{ settingsStore.modelParameters.presence_penalty }}</label>
               <input 
                 id="presence_penalty" 
-                v-model="modelParameters.presence_penalty" 
+                v-model="settingsStore.modelParameters.presence_penalty" 
                 type="range" 
                 min="-2" 
                 max="2" 
                 step="0.1"
-                class="w-full"
+                class="w-full accent-accent"
               />
               <p class="mt-1 text-xs text-text-secondary">Penalty for token presence (positive = encourage new topics)</p>
             </div>
             
             <div>
-              <label for="frequency_penalty" class="block mb-1 text-sm font-medium">Frequency: {{ modelParameters.frequency_penalty }}</label>
+              <label for="frequency_penalty" class="block mb-1 text-sm font-medium">Frequency: {{ settingsStore.modelParameters.frequency_penalty }}</label>
               <input 
                 id="frequency_penalty" 
-                v-model="modelParameters.frequency_penalty" 
+                v-model="settingsStore.modelParameters.frequency_penalty" 
                 type="range" 
                 min="-2" 
                 max="2" 
                 step="0.1"
-                class="w-full"
+                class="w-full accent-accent"
               />
               <p class="mt-1 text-xs text-text-secondary">Penalty for token frequency (positive = discourage frequent tokens)</p>
             </div>
@@ -657,7 +570,7 @@ export default {
         </div>
         
         <!-- Stop Sequences -->
-        <div class="bg-primary rounded-lg p-4 shadow-xl border border-border-accent">
+        <div class="bg-primary rounded-lg p-4 shadow-lg border border-border-accent">
           <h3 class="font-semibold mb-3">Stop Sequences</h3>
           
           <div class="flex gap-2 mb-3">
@@ -677,18 +590,18 @@ export default {
           </div>
           
           <div class="flex flex-wrap gap-2">
-            <div v-if="stopSequences.length === 0" class="text-sm text-text-secondary italic">
+            <div v-if="settingsStore.stopSequences.length === 0" class="text-sm text-text-secondary italic">
               No stop sequences defined
             </div>
             
             <div 
-              v-for="(sequence, index) in stopSequences" 
+              v-for="(sequence, index) in settingsStore.stopSequences" 
               :key="index"
               class="flex items-center bg-accent rounded-md px-2 py-1"
             >
               <code class="text-xs mr-2">{{ sequence }}</code>
               <button 
-                @click="removeStopSequence(index)" 
+                @click="settingsStore.removeStopSequence(index)" 
                 class="text-red-500 hover:text-red-700"
                 title="Remove"
               >
@@ -713,7 +626,7 @@ export default {
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           
           <!-- Input Settings -->
-          <div class="bg-primary rounded-lg p-4 shadow-xl border border-border-accent">
+          <div class="bg-primary rounded-lg p-4 shadow-lg border border-border-accent">
             <h3 class="font-semibold mb-3">Input Settings</h3>
             
             <div class="space-y-3">
@@ -721,7 +634,7 @@ export default {
                 <label for="provider" class="block mb-1 text-sm font-medium">Input Editor Height (px:):</label>
                 <input 
                   id="editorHeight" 
-                  v-model="chatSettings.editorHeight" 
+                  v-model="settingsStore.chatSettings.editorHeight" 
                   type="number" 
                   min="50" 
                   max="500"
@@ -732,7 +645,7 @@ export default {
               <div>
                 <input 
                   id="autoScroll" 
-                  v-model="chatSettings.autoScroll" 
+                  v-model="settingsStore.chatSettings.autoScroll" 
                   type="checkbox" 
                   class="w-4 h-4 mr-2 accent-accent"
                 />
@@ -742,13 +655,13 @@ export default {
           </div>
 
           <!-- Display Settings -->
-          <div class="bg-primary rounded-lg p-4 shadow-xl border border-border-accent">
+          <div class="bg-primary rounded-lg p-4 shadow-lg border border-border-accent">
             <h3 class="font-semibold mb-3">Display Settings</h3>
             
             <div class="flex items-center mb-3">
               <input 
                 id="showTimestamps" 
-                v-model="chatSettings.showTimestamps" 
+                v-model="settingsStore.chatSettings.showTimestamps" 
                 type="checkbox" 
                 class="w-4 h-4 mr-2 accent-accent"
               />
@@ -758,7 +671,7 @@ export default {
             <div class="flex items-center mb-4">
               <input 
                 id="showMessageInfo" 
-                v-model="chatSettings.showMessageInfo" 
+                v-model="settingsStore.chatSettings.showMessageInfo" 
                 type="checkbox" 
                 class="w-4 h-4 mr-2 accent-accent"
               />
@@ -767,11 +680,11 @@ export default {
           </div>
 
           <!-- Theme Selector -->
-          <ThemeSelector class="shadow-xl border border-border-accent"></ThemeSelector>
+          <ThemeSelector class="shadow-lg border border-border-accent"></ThemeSelector>
         </div>
 
         <!-- Quick Prompts -->
-        <div class="bg-primary rounded-lg p-4 shadow-xl border border-border-accent">
+        <div class="bg-primary rounded-lg p-4 shadow-lg border border-border-accent">
           <h2 class="text-xl font-semibold mb-4">Quick Prompts</h2>
         
           <div class="mb-4">
@@ -793,7 +706,7 @@ export default {
             
             <button 
               @click="addQuickPrompt" 
-              class="px-4 py-2 bg-accent hover:bg-accent-hover rounded-md transition-colors"
+              class="px-4 py-2 bg-accent hover:bg-accent-hover rounded-md transition-colors shadow-md"
               :disabled="!newQuickPromptTitle || !newQuickPromptContent"
             >
               Add Quick Prompt
@@ -801,19 +714,19 @@ export default {
           </div>
           
           <div class="space-y-3 mt-4">
-            <div v-if="chatSettings.quickPrompts.length === 0" class="text-sm text-text-secondary italic">
+            <div v-if="settingsStore.chatSettings.quickPrompts.length === 0" class="text-sm text-text-secondary italic">
               No quick prompts defined
             </div>
             
             <div 
-              v-for="(prompt, index) in chatSettings.quickPrompts" 
+              v-for="(prompt, index) in settingsStore.chatSettings.quickPrompts" 
               :key="index"
               class="bg-accent rounded-md p-3"
             >
               <div class="flex justify-between items-center mb-2">
                 <h3 class="font-medium">{{ prompt.title }}</h3>
                 <button 
-                  @click="removeQuickPrompt(index)" 
+                  @click="settingsStore.removeQuickPrompt(index)" 
                   class="text-red-500 hover:text-red-700"
                   title="Remove"
                 >
@@ -840,14 +753,14 @@ export default {
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           
           <!-- Font Settings -->
-          <div class="bg-primary rounded-lg p-4 shadow-xl border border-border-accent">
+          <div class="bg-primary rounded-lg p-4 shadow-lg border border-border-accent">
             <h2 class="text-xl font-semibold mb-4">Font Settings</h2>
     
             <div class="mb-4">
               <label for="fontSize" class="block mb-2 font-medium">Font Size:</label>
               <select 
                 id="fontSize" 
-                v-model="uiSettings.fontSize" 
+                v-model="settingsStore.uiSettings.fontSize" 
                 class="w-full bg-accent border border-border-accent text-text-primary p-2 rounded-md focus:outline-none focus:ring-2"
               >
                 <option value="small">Small</option>
@@ -858,14 +771,14 @@ export default {
           </div>
 
           <!-- Display Formatting -->
-          <div class="bg-primary rounded-lg p-4 shadow-xl border border-border-accent">
+          <div class="bg-primary rounded-lg p-4 shadow-lg border border-border-accent">
             <h2 class="text-xl font-semibold mb-4">Display Formatting</h2>
             
             <div class="mb-4">
               <label for="codeBlockTheme" class="block mb-2 font-medium">Code Block Theme:</label>
               <select 
                 id="codeBlockTheme" 
-                v-model="uiSettings.codeBlockTheme" 
+                v-model="settingsStore.uiSettings.codeBlockTheme" 
                 class="w-full bg-accent border border-border-accent text-text-primary p-2 rounded-md focus:outline-none focus:ring-2"
               >
                 <option value="default">Default</option>
@@ -878,7 +791,7 @@ export default {
               <label for="markdownRenderer" class="block mb-2 font-medium">Markdown Renderer:</label>
               <select 
                 id="markdownRenderer" 
-                v-model="uiSettings.markdownRenderer" 
+                v-model="settingsStore.uiSettings.markdownRenderer" 
                 class="w-full bg-accent border border-border-accent text-text-primary p-2 rounded-md focus:outline-none focus:ring-2"
               >
                 <option value="default">Default</option>
@@ -889,13 +802,13 @@ export default {
           </div>
 
           <!-- Layout Settings -->
-          <div class="bg-primary rounded-lg p-4 shadow-xl border border-border-accent">
+          <div class="bg-primary rounded-lg p-4 shadow-lg border border-border-accent">
             <h2 class="text-xl font-semibold mb-4">Layout Settings</h2>
             
             <div class="flex items-center mb-4">
               <input 
                 id="compactView" 
-                v-model="uiSettings.compactView" 
+                v-model="settingsStore.uiSettings.compactView" 
                 type="checkbox" 
                 class="w-4 h-4 mr-2 accent-accent"
               />
@@ -906,7 +819,7 @@ export default {
               <label for="sidebarPosition" class="block mb-2 font-medium">Sidebar Position:</label>
               <select 
                 id="sidebarPosition" 
-                v-model="uiSettings.sidebarPosition" 
+                v-model="settingsStore.uiSettings.sidebarPosition" 
                 class="w-full bg-accent border border-border-accent text-text-primary p-2 rounded-md focus:outline-none focus:ring-2"
               >
                 <option value="left">Left</option>
@@ -928,13 +841,13 @@ export default {
         <!-- Chat-Saving-Export-Privacy settings -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <!-- Chat History -->
-          <div class="bg-primary rounded-lg p-4 shadow-xl border border-border-accent">
+          <div class="bg-primary rounded-lg p-4 shadow-lg border border-border-accent">
             <h2 class="text-xl font-semibold mb-4">Chat History</h2>
     
             <div class="flex items-center mb-4">
               <input 
                 id="enableHistory" 
-                v-model="dataSettings.enableHistory" 
+                v-model="settingsStore.dataSettings.enableHistory" 
                 type="checkbox" 
                 class="w-4 h-4 mr-2 accent-accent"
               />
@@ -945,7 +858,7 @@ export default {
               <label for="maxStoredChats" class="block mb-2 font-medium">Maximum Stored Chats:</label>
               <input 
                 id="maxStoredChats" 
-                v-model="dataSettings.maxStoredChats" 
+                v-model="settingsStore.dataSettings.maxStoredChats" 
                 type="number" 
                 min="1" 
                 max="1000"
@@ -956,13 +869,13 @@ export default {
           </div>
 
           <!-- Saving & Export -->
-          <div class="bg-primary rounded-lg p-4 shadow-xl border border-border-accent">
+          <div class="bg-primary rounded-lg p-4 shadow-lg border border-border-accent">
             <h2 class="text-xl font-semibold mb-4">Saving & Export</h2>
             
             <div class="flex items-center mb-4">
               <input 
                 id="autoSaveChats" 
-                v-model="dataSettings.autoSaveChats" 
+                v-model="settingsStore.dataSettings.autoSaveChats" 
                 type="checkbox" 
                 class="w-4 h-4 mr-2 accent-accent"
               />
@@ -973,7 +886,7 @@ export default {
               <label for="saveFormat" class="block mb-2 font-medium">Save Format:</label>
               <select 
                 id="saveFormat" 
-                v-model="dataSettings.saveFormat" 
+                v-model="settingsStore.dataSettings.saveFormat" 
                 class="w-full bg-accent border border-border-accent text-text-primary p-2 rounded-md focus:outline-none focus:ring-2"
               >
                 <option value="json">JSON</option>
@@ -985,7 +898,7 @@ export default {
             <div class="flex items-center mb-4">
               <input 
                 id="exportIncludeMetadata" 
-                v-model="dataSettings.exportIncludeMetadata" 
+                v-model="settingsStore.dataSettings.exportIncludeMetadata" 
                 type="checkbox" 
                 class="w-4 h-4 mr-2 accent-accent"
               />
@@ -994,7 +907,7 @@ export default {
           </div>
 
           <!-- Data privacy -->
-          <div class="bg-primary rounded-lg p-4 shadow-xl border border-border-accent">
+          <div class="bg-primary rounded-lg p-4 shadow-lg border border-border-accent">
             <h2 class="text-xl font-semibold mb-4">Data privacy</h2>
             
             <button
@@ -1008,25 +921,44 @@ export default {
           </div>
         </div>
       </div>
-      
+
       <!-- Action Buttons -->
       <div class="border-t border-border-accent mt-6 pt-4 flex justify-between">
         <button 
-          @click="resetToDefaults" 
-          class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors mb-2"
+          @click="resetSettings" 
+          class="px-4 py-2 bg-red-500 hover:bg-red-700 text-white rounded-md transition-colors mb-2 shadow-lg"
         >
           Reset to Defaults
         </button>
         
         <button 
           @click="saveSettings" 
-          class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors mb-2"
+          class="px-4 py-2 bg-green-500 hover:bg-green-700 text-white rounded-md transition-colors mb-2 shadow-lg"
         >
           Save Settings
         </button>
-      </div>
+      </div> 
     </div>
   </div>
 </template>
 
-<style></style>
+<style>
+
+::-webkit-scrollbar{
+  width: 10px !important;
+  height: 6px !important;
+}
+
+::-webkit-scrollbar-thumb{
+  background: var(--ide-theme-secondary) !important;
+  border-radius: 0px !important;
+}
+
+::-webkit-scrollbar-thumb:hover{
+  background: var(--ide-theme-accent) !important;
+}
+
+::-webkit-scrollbar-track{
+  background: transparent !important;
+}
+</style>

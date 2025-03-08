@@ -1,11 +1,12 @@
-<script>
-import { marked } from "marked";
+<script lang="ts">
+import { marked, MarkedOptions } from "marked";
 import hljs from "highlight.js";
 import "highlight.js/styles/atom-one-dark.css";
-import { LLMClient, PROVIDERS } from "../lib/llm-client";
+import { CompletionOptions, LLMClient, Message, ModelParameters } from "../lib/llm-client";
+import { useSettingsStore } from "../stores/settings";
 
 marked.setOptions({
-  highlight: (code, lang) => {
+  highlight: (code: string, lang: string) => {
     if (lang && hljs.getLanguage(lang)) {
       return hljs.highlight(code, { language: lang }).value;
     }
@@ -13,7 +14,24 @@ marked.setOptions({
   },
   gfm: true,
   breaks: true,
-});
+} as MarkedOptions);
+
+interface ChatMessage {
+  id: number,
+  sender: "User" | "AI" | "Error";
+  content: string;
+  timestamp: string;
+  timeTaken?: number;
+  tokenCount?: number;
+}
+
+interface CodeBlock {
+  messageIndex: number;
+  codeIndex: number;
+  content: string;
+  id: string;
+  language: string;
+}
 
 export default {
   emits: ["applyCode"],
@@ -21,112 +39,76 @@ export default {
     return {
       chatOpen: false,
       userInput: "",
-      messages: [],
-      codeBlocks: [],
+      messages: [] as ChatMessage[],
+      codeBlocks: [] as CodeBlock[],
       chatWidth: parseInt(localStorage.getItem("chatWidth") || "320"),
       isResizing: false,
       processingResponse: false,
       editorMode: {
         active: true,
-        sourceTabId: null,
-        selection: null,
+        sourceTabId: null as number | null,
+        selection: null as string | null,
       },
-      llmClient: null,
-      // Model settings
-      selectedModel: localStorage.getItem("selectedModel") || "",
-      selectedProvider: localStorage.getItem("selectedProvider") || PROVIDERS.OLLAMA, // Defaults to ollama, for now.
-      baseUrl: localStorage.getItem("baseUrl") || "http://localhost:11434",
-      // Model Parameters
-      modelParameters: {
-        temperature: parseFloat(localStorage.getItem("temperature") || "0.7"),
-        top_p: parseFloat(localStorage.getItem("top_p") || "0.9"),
-        top_k: parseInt(localStorage.getItem("top_k") || "40"),
-        presence_penalty: parseFloat(localStorage.getItem("presence_penalty") || "0"),
-        frequency_penalty: parseFloat(localStorage.getItem("frequency_penalty") || "0"),
-        max_tokens: parseInt(localStorage.getItem("max_tokens") || "2048"),
-        repeat_penalty: parseFloat(localStorage.getItem("repeat_penalty") || "1.1"),
-        stop: JSON.parse(localStorage.getItem("stopSequences") || "[]"),
-      },
-      // Chat Interface Settings
-      chatSettings: {
-        showTimestamps: localStorage.getItem("showTimestamps") === "true" || false,
-        showMessageInfo: localStorage.getItem("showMessageInfo") === "true" || false,
-        autoScroll: localStorage.getItem("autoScroll") === "true" || true,
-        quickPrompts: JSON.parse(localStorage.getItem("quickPrompts") || "[]"),
-        editorHeight: parseInt(localStorage.getItem("editorHeight") || "150"),
-      },
-      // UI Settings
-      uiSettings: {
-        fontSize: localStorage.getItem("fontSize") || "medium",
-        codeBlockTheme: localStorage.getItem("codeBlockTheme") || "default",
-        markdownRenderer: localStorage.getItem("markdownRenderer") || "default",
-        compactView: localStorage.getItem("compactView") === "true" || false,
-        sidebarPosition: localStorage.getItem("sidebarPosition") || "left",
-      },
-      // Data Management Settings
-      dataSettings: {
-        enableHistory: localStorage.getItem("enableHistory") === "true" || true,
-        autoSaveChats: localStorage.getItem("autoSaveChats") === "true" || true,
-        saveFormat: localStorage.getItem("saveFormat") || "json",
-        maxStoredChats: parseInt(localStorage.getItem("maxStoredChats") || "50"),
-        exportIncludeMetadata: localStorage.getItem("exportIncludeMetadata") === "true" || true,
-      },
+      llmClient: null as LLMClient | null,
     };
   },
   computed: {
-    quickPromptsList() {
-      return this.chatSettings.quickPrompts || [];
+    settingsStore() {
+      return useSettingsStore()
     },
-    fontSizeClass() {
+    quickPromptsList() {
+      return this.settingsStore.chatSettings.quickPrompts || [];
+    },
+    fontSizeClass() : string {
       const sizes = {
         small: "text-sm",
         medium: "text-base",
         large: "text-lg"
       };
-      return sizes[this.uiSettings.fontSize] || "text-base";
+      return sizes[this.settingsStore.uiSettings.fontSize as keyof typeof sizes] || "text-base";
     },
-    codeThemeClass() {
-      return `theme-${this.uiSettings.codeBlockTheme}`;
+    codeThemeClass(): string {
+      return `theme-${this.settingsStore.uiSettings.codeBlockTheme}`;
     },
-    compactViewClass() {
-      return this.uiSettings.compactView ? "compact-view" : "";
+    compactViewClass(): string {
+      return this.settingsStore.uiSettings.compactView ? "compact-view" : "";
     },
-    chatSizeStyle() {
+    chatSizeStyle(): { width: string; height: string; } {
       return {
         width: `${this.chatWidth}px`,
-        height: this.uiSettings.compactView ? 'calc(70% - 2rem)' : 'calc(100% - 2rem)'
+        height: this.settingsStore.uiSettings.compactView ? 'calc(70% - 2rem)' : ''
       };
     },
-    editorHeightStyle() {
+    editorHeightStyle(): { height: string } {
       return {
-        height: `${this.chatSettings.editorHeight}px`
+        height: `${this.settingsStore.chatSettings.editorHeight}px`
       };
     }
   },
   watch: {
     messages: {
       deep: true,
-      handler(newMessages) {
+      handler(newMessages: ChatMessage[]) {
         this.$nextTick(() => {
           this.extractCodeBlocks(newMessages);
-          if (this.chatSettings.autoScroll) {
+          if (this.settingsStore.chatSettings.autoScroll) {
             this.scrollToBottom();
           }
         });
         
-        if (this.dataSettings.autoSaveChats) {
+        if (this.settingsStore.dataSettings.autoSaveChats) {
           this.saveChatHistory();
         }
       },
     },
-    'uiSettings.codeBlockTheme': function() {
+    'settingsStore.uiSettings.codeBlockTheme'() {
       this.$nextTick(() => {
         this.applyHighlighting();
       });
     }
   },
   created() {
-    if (this.dataSettings.enableHistory) {
+    if (this.settingsStore.dataSettings.enableHistory) {
       this.loadChatHistory();
     }
     this.initLLMClient();
@@ -145,26 +127,26 @@ export default {
   },
   methods: {
     initLLMClient() {
-      this.llmClient = new LLMClient(this.selectedProvider);
-      this.llmClient.setBaseUrl(this.baseUrl);
+      this.llmClient = new LLMClient(this.settingsStore.llmConnection.selectedProvider);
+      this.llmClient.setBaseUrl(this.settingsStore.llmConnection.baseUrl);
     },
 
     applyHighlighting() {
       this.$nextTick(() => {
         document.querySelectorAll('pre code').forEach((block) => {
-          hljs.highlightElement(block);
+          hljs.highlightElement(block as HTMLElement);
         });
       });
     },
 
     scrollToBottom() {
       this.$nextTick(() => {
-        const container = this.$el.querySelector(".messages-container");
+        const container = this.$el.querySelector(".messages-container") as HTMLElement;
         if (container) container.scrollTop = container.scrollHeight;
       });
     },
 
-    extractCodeBlocks(messages) {
+    extractCodeBlocks(messages: ChatMessage[]) {
       this.codeBlocks = [];
       messages.forEach((msg, msgIndex) => {
         if (msg.sender === "AI") {
@@ -175,7 +157,7 @@ export default {
             this.codeBlocks.push({
               messageIndex: msgIndex,
               codeIndex,
-              content: codeBlock.textContent,
+              content: codeBlock.textContent || "",
               id: `${msg.id}-${codeIndex}`,
               language: codeBlock.className.replace("language-", "").trim() || "plaintext"
             });
@@ -184,12 +166,12 @@ export default {
       });
     },
 
-    applyCode(code) {
+    applyCode(code: string, event: Event): void {
       this.$emit("applyCode", { code });
-      const button = event.target;
-      button.classList.add("bg-green-500");
+      const button = event.target as HTMLButtonElement | null;
+      button?.classList.add("bg-green-500");
       setTimeout(() => {
-        button.classList.remove("bg-green-500");
+        button?.classList.remove("bg-green-500");
       }, 1000);
     },
 
@@ -203,7 +185,7 @@ export default {
       }
     },
 
-    openWithPrompt(prompt, tabId = null, selection = null) {
+    openWithPrompt(prompt: string, tabId: number | null = null, selection: string | null = null) {
       this.chatOpen = true;
       this.editorMode = {
         active: true,
@@ -214,17 +196,17 @@ export default {
       this.sendMessage();
     },
 
-    applyQuickPrompt(promptContent) {
+    applyQuickPrompt(promptContent: string) {
       this.userInput = promptContent;
       this.sendMessage();
     },
 
-    startResize(event) {
+    startResize(event: MouseEvent) {
       this.isResizing = true;
       event.preventDefault();
     },
 
-    handleMouseMove(event) {
+    handleMouseMove(event: MouseEvent) {
       if (!this.isResizing) return;
       const newWidth = window.innerWidth - event.clientX;
       if (newWidth >= 250 && newWidth <= 600) {
@@ -241,36 +223,33 @@ export default {
       if (this.userInput.trim() && !this.processingResponse) {
         this.processingResponse = true;
         const messageId = Date.now();
-        const userMessage = {
+        
+        const userMessage: ChatMessage = {
           id: messageId,
           sender: "User",
           content: this.userInput,
           timestamp: new Date().toISOString(),
         };
+
         this.messages.push(userMessage);
         this.userInput = "";
-        const aiMessage = {
+        
+        const aiMessage: ChatMessage = {
           id: messageId + 1,
           sender: "AI",
-          content: `${this.selectedModel} is thinking...`,
+          content: `${this.settingsStore.llmConnection.selectedModel} is thinking...`,
           timestamp: new Date().toISOString(),
-          timeTaken: null,
-          tokenCount: null
         };
         this.messages.push(aiMessage);
-        
-        if (this.dataSettings.autoSaveChats) {
-          this.saveChatHistory();
-        }
         
         await this.getStreamingResponse(userMessage.content);
         this.processingResponse = false;
       }
     },
 
-    async getStreamingResponse(input) {
-      let messages = [];
-      
+    async getStreamingResponse(input: string) {
+      let messages: Message[] = [];
+
       if (this.messages.length > 2) {
         const previousMessages = this.messages.slice(-10, -1);
         previousMessages.forEach(msg => {
@@ -280,66 +259,43 @@ export default {
           });
         });
       }
-      
-      messages.push({ role: "user", content: input });
-      
-      const options = {
-        model: this.selectedModel,
-        messages: messages,
-        stream: true,
-        parameters: this.modelParameters
-      };
+
+      messages.push({ role: "user", content: input});
 
       try {
         const startTime = Date.now();
         let messageContent = "";
         let tokenCount = 0;
-        
+
         if (!this.llmClient) {
           this.initLLMClient();
         }
-        
-        const response = await this.llmClient.chat(options);
+
+        const options = {
+          model: this.settingsStore.llmConnection.selectedModel,
+          messages,
+          stream: true,
+          parameters: this.settingsStore.modelParameters as ModelParameters
+        } as CompletionOptions;
+
+        const response = await this.llmClient!.chat(options);
 
         for await (const part of response) {
           messageContent += part.message.content;
-          tokenCount += 1; // TODO: This is just an approximation. Might implement a better heuristic later.
-          this.updateMessage(this.renderMarkdown(messageContent));
+          tokenCount += 1;
+          this.updateMessage(await this.renderMarkdown(messageContent));
         }
 
         const timeTaken = ((Date.now() - startTime) / 1000).toFixed(2);
-        let finalContent = this.renderMarkdown(messageContent);
-        
-        let metaInfo = "";
-        
-        if (this.chatSettings.showTimestamps) {
-          metaInfo += `<span class="text-chat-text-accent">took ${timeTaken}s</span>`;
-        }
-        
-        if (this.chatSettings.showMessageInfo) {
-          metaInfo += metaInfo ? " · " : "";
-          metaInfo += `<span class="text-chat-text-accent">~${tokenCount} tokens</span>`;
-        }
-        
-        // This created a bug where the meta info was sent to the ai...
-        /*
-        if (metaInfo) {
-          finalContent += `<div class="meta-info text-xs mt-2">${metaInfo}</div>`;
-        }
-          */
-        
-        this.updateMessage(finalContent, {
+        this.updateMessage(await this.renderMarkdown(messageContent), {
           timeTaken: parseFloat(timeTaken),
-          tokenCount: tokenCount
+          tokenCount
         });
-        
+
         this.applyHighlighting();
+        this.addCodeBlockActions();
 
-        setTimeout(() => {
-          this.addCodeBlockActions();
-        }, 500);
-
-        if (this.dataSettings.autoSaveChats) {
+        if (this.settingsStore.dataSettings.autoSaveChats) {
           this.saveChatHistory();
         }
       } catch (error) {
@@ -347,36 +303,33 @@ export default {
         this.messages.push({
           id: Date.now(),
           sender: "Error",
-          content: `Error: Unable to get a response from ${this.selectedProvider || "the LLM provider"}.`,
+          content: `Error: Unable to get response from ${this.settingsStore.llmConnection.selectedProvider}`,
           timestamp: new Date().toISOString(),
         });
-        
-        if (this.dataSettings.autoSaveChats) {
-          this.saveChatHistory();
-        }
       }
     },
+
+    copyCode(code: string) {
+      navigator.clipboard.writeText(code);
+    },
     
-    stripHtml(html) {
+    stripHtml(html: string): string {
       const doc = new DOMParser().parseFromString(html, 'text/html');
       return doc.body.textContent || "";
     },
 
-    updateMessage(content, metadata = {}) {
-      const lastMessageIndex = this.messages.length - 1;
-      this.messages[lastMessageIndex].content = content;
+    updateMessage(content: string, metadata: {timeTaken?: number, tokenCount?: number} = {}) {
+      const lastMessage = this.messages[this.messages.length - 1];
       
-      if (metadata.timeTaken !== undefined) {
-        this.messages[lastMessageIndex].timeTaken = metadata.timeTaken;
-      }
-      
-      if (metadata.tokenCount !== undefined) {
-        this.messages[lastMessageIndex].tokenCount = metadata.tokenCount;
+      if (lastMessage) {
+        lastMessage.content = content;
+        if (metadata.timeTaken !== undefined) lastMessage.timeTaken = metadata.timeTaken;
+        if (metadata.tokenCount !== undefined) lastMessage.tokenCount = metadata.tokenCount;
       }
     },
 
-    renderMarkdown(text) {
-      if (this.uiSettings.markdownRenderer === "default") {
+    async renderMarkdown(text : string): Promise<string> {
+      if (this.settingsStore.uiSettings.markdownRenderer === "default") {
         return marked(text);
       } else {
         // TODO: implement alternative renderers.
@@ -385,49 +338,38 @@ export default {
     },
 
     addCodeBlockActions() {
-      if (!this.editorMode.active) return;
       setTimeout(() => {
         const messageContainers = document.querySelectorAll(".ai-message");
-        if (!messageContainers.length) return;
+        const lastContainer = messageContainers[messageContainers.length - 1];
         
-        const lastMessageContainer = messageContainers[messageContainers.length - 1];
-        if (!lastMessageContainer) return;
-        
-        const codeBlocks = lastMessageContainer.querySelectorAll("pre code");
-        codeBlocks.forEach((codeBlock) => {
-          if (codeBlock.parentElement.querySelector(".code-actions")) return;
-          
-          const actionsContainer = document.createElement("div");
-          actionsContainer.className = "code-actions";
-          actionsContainer.style.display = "flex";
-          actionsContainer.style.gap = "8px";
-          actionsContainer.style.marginTop = "8px";
+        lastContainer?.querySelectorAll("pre code").forEach((codeBlock) => {
+          if (codeBlock.parentElement?.querySelector(".code-actions")) return;
+
+          const actions = document.createElement("div");
+          actions.className = "code-actions";
           
           const applyButton = document.createElement("button");
-          applyButton.className = "apply-button px-2 py-1 text-xs bg-chat-code-apply hover:bg-chat-code-apply-hover rounded transition-colors";
+          applyButton.className = "apply-button px-2 py-1 text-xs bg-chat-code-apply hover:bg-chat-code-apply-hover rounded transition-colors select-none";
           applyButton.textContent = "Apply to Editor";
-          applyButton.onclick = () => this.applyCodeToEditor(codeBlock.textContent);
+          applyButton.onclick = () => 
+            this.applyCodeToEditor(codeBlock.textContent || "");
           
           const copyButton = document.createElement("button");
-          copyButton.className = "copy-button px-2 py-1 text-xs bg-chat-code-copy hover:bg-chat-code-copy-hover rounded transition-colors";
+          copyButton.className = "copy-button px-2 py-1 text-xs bg-chat-code-copy hover:bg-chat-code-copy-hover rounded transition-colors select-none";
           copyButton.textContent = "Copy";
           copyButton.onclick = () => {
-            navigator.clipboard.writeText(codeBlock.textContent);
+            navigator.clipboard.writeText(codeBlock.textContent || "");
             copyButton.textContent = "Copied!";
-            setTimeout(() => {
-              copyButton.textContent = "Copy";
-            }, 2000);
+            setTimeout(() => copyButton.textContent = "Copy", 2000);
           };
-          
-          actionsContainer.appendChild(applyButton);
-          actionsContainer.appendChild(copyButton);
-          
-          codeBlock.parentElement.appendChild(actionsContainer);
+
+          actions.append(applyButton, copyButton);
+          codeBlock.parentElement?.append(actions);
         });
       }, 100);
     },
 
-    applyCodeToEditor(code) {
+    applyCodeToEditor(code: string): void {
       this.$emit("applyCode", {
         code: code,
         tabId: this.editorMode.sourceTabId,
@@ -435,8 +377,8 @@ export default {
       });
     },
 
-    saveChatHistory() {
-      if (!this.dataSettings.enableHistory) return;
+    saveChatHistory() : void {
+      if (!this.settingsStore.dataSettings.enableHistory) return;
       
       let chats = [];
       try {
@@ -460,15 +402,15 @@ export default {
       
       chats.unshift(currentChat);
       
-      if (chats.length > this.dataSettings.maxStoredChats) {
-        chats = chats.slice(0, this.dataSettings.maxStoredChats);
+      if (chats.length > this.settingsStore.dataSettings.maxStoredChats) {
+        chats = chats.slice(0, this.settingsStore.dataSettings.maxStoredChats);
       }
       
       localStorage.setItem("chatHistory", JSON.stringify(chats));
     },
 
-    loadChatHistory() {
-      if (!this.dataSettings.enableHistory) return;
+    loadChatHistory(): void {
+      if (!this.settingsStore.dataSettings.enableHistory) return;
       
       try {
         const chats = JSON.parse(localStorage.getItem("chatHistory") || "[]");
@@ -487,28 +429,17 @@ export default {
       }
     },
 
-    clearChatHistory() {
+    clearChatHistory(): void {
       this.messages = [];
-      
-      if (this.dataSettings.enableHistory) {
-        let chats = [];
-        try {
-          chats = JSON.parse(localStorage.getItem("chatHistory") || "[]");
-          chats = chats.filter(chat => chat.id !== "current");
-          localStorage.setItem("chatHistory", JSON.stringify(chats));
-        } catch (error) {
-          console.error("Error clearing chat history:", error);
-        }
-      }
     },
 
-    formatTime(timestamp) {
-      if (!timestamp || !this.chatSettings.showTimestamps) return "";
+    formatTime(timestamp: string): string {
+      if (!timestamp || !this.settingsStore.chatSettings.showTimestamps) return "";
       const date = new Date(timestamp);
       return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     },
     
-    exportChat() {
+    exportChat(): void {
       if (this.messages.length === 0) return;
       
       let content;
@@ -516,14 +447,14 @@ export default {
       let filename = `chat-export-${timestamp}`;
       let type;
       
-      if (this.dataSettings.saveFormat === "json") {
+      if (this.settingsStore.dataSettings.saveFormat === "json") {
         let exportData = this.messages.map(msg => {
           const base = {
             role: msg.sender === "User" ? "user" : "assistant",
             content: msg.sender === "AI" ? this.stripHtml(msg.content) : msg.content
           };
           
-          if (this.dataSettings.exportIncludeMetadata) {
+          if (this.settingsStore.dataSettings.exportIncludeMetadata) {
             return {
               ...base,
               timestamp: msg.timestamp,
@@ -538,17 +469,17 @@ export default {
         content = JSON.stringify(exportData, null, 2);
         filename += ".json";
         type = "application/json";
-      } else if (this.dataSettings.saveFormat === "markdown") {
+      } else if (this.settingsStore.dataSettings.saveFormat === "markdown") {
         content = this.messages.map(msg => {
           let header = `## ${msg.sender === "User" ? "User" : "Assistant"}`;
-          if (this.dataSettings.exportIncludeMetadata && msg.timestamp) {
+          if (this.settingsStore.dataSettings.exportIncludeMetadata && msg.timestamp) {
             header += ` (${new Date(msg.timestamp).toLocaleString()})`;
           }
           
           let body = msg.sender === "AI" ? this.stripHtml(msg.content) : msg.content;
           
           let meta = "";
-          if (this.dataSettings.exportIncludeMetadata) {
+          if (this.settingsStore.dataSettings.exportIncludeMetadata) {
             if (msg.timeTaken) meta += `Time: ${msg.timeTaken}s | `;
             if (msg.tokenCount) meta += `Tokens: ~${msg.tokenCount}`;
             if (meta) meta = `\n\n*${meta}*`;
@@ -586,7 +517,7 @@ export default {
   <div class="relative z-10">
     <button
       @click="toggleChat"
-      class="fixed right-8 bg-chat-accent p-3 rounded-xl"
+      class="fixed right-12 bg-chat-accent pl-4 pr-4 pt-3.5 pb-3.5 rounded-2xl hover:bg-secondary transition-colors shadow-xl border border-border-accent"
       :style="{ bottom: `calc(4rem + 1rem)` }"
     >
       <i class="fas fa-comments"></i>
@@ -595,7 +526,7 @@ export default {
     <transition name="slide">
       <div
         v-if="chatOpen"
-        class="fixed top-0 right-0 bg-chat-accent rounded-l-lg shadow-lg overflow-hidden flex flex-col z-10"
+        class="fixed top-17 right-0 bottom-10.5 bg-chat-accent rounded-l-4xl overflow-hidden flex flex-col z-10"
         :style="chatSizeStyle"
         :class="compactViewClass"
       >
@@ -605,7 +536,7 @@ export default {
           :class="{ 'bg-blue-500': isResizing, 'bg-chat-resize-bar': !isResizing }"
         ></div>
         
-        <div class="flex justify-between items-center p-4">
+        <div class="flex justify-between items-center p-4 select-none">
           <span class="text-lg font-semibold">Chat</span>
           <div class="flex items-center">
             <button 
@@ -629,7 +560,7 @@ export default {
         <!-- Quick Prompts Row -->
         <div 
           v-if="quickPromptsList.length > 0" 
-          class="quick-prompts-container px-4 py-2 mb-1 whitespace-nowrap text-xs font-semibold"
+          class="quick-prompts-container px-4 py-2 mb-1 whitespace-nowrap text-xs font-semibold select-none"
         >
             <p class="text-xs text-text-accent font-semibold py-2">QUICK PROMPTS</p>
           <button
@@ -651,15 +582,15 @@ export default {
                     v-for="message in messages" 
                     :key="message.id" 
                     class="message-container mb-4"
-                    :class="{ 'mb-2': uiSettings.compactView }"
+                    :class="{ 'mb-2': settingsStore.uiSettings.compactView }"
                   >
                     <div 
                       v-if="message.sender === 'Error'" 
                       class="ai-message text-white bg-red-800 p-3 rounded-lg shadow-lg"
-                      :class="{ 'p-2': uiSettings.compactView }"
+                      :class="{ 'p-2': settingsStore.uiSettings.compactView }"
                     >
                       <p v-html="message.content"></p>
-                      <small v-if="message.timestamp && chatSettings.showTimestamps" class="text-white block mt-1">
+                      <small v-if="message.timestamp && settingsStore.chatSettings.showTimestamps" class="text-white block mt-1">
                         {{ formatTime(message.timestamp) }}
                       </small>
                     </div>
@@ -667,11 +598,11 @@ export default {
                     <div 
                       v-else-if="message.sender === 'AI'" 
                       class="ai-message bg-chat-secondary p-3 rounded-lg shadow-lg"
-                      :class="{ 'p-2': uiSettings.compactView }"
+                      :class="{ 'p-2': settingsStore.uiSettings.compactView }"
                     >
                       <div 
                         class="prose prose-invert max-w-none" 
-                        :class="[codeThemeClass, {'prose-sm': uiSettings.fontSize === 'small' || uiSettings.compactView}]" 
+                        :class="[codeThemeClass, {'prose-sm': settingsStore.uiSettings.fontSize === 'small' || settingsStore.uiSettings.compactView}]" 
                         v-html="message.content"
                       ></div>
                       
@@ -682,23 +613,23 @@ export default {
                       >
                         <div class="code-actions flex gap-2 mt-2">
                           <button
-                            @click="applyCode(block.content)"
-                            class="px-2 py-1 text-xs bg-chat-code-apply hover:bg-chat-code-apply-hover rounded transition-colors"
+                            @click="applyCode(block.content, $event)"
+                            class="px-2 py-1 text-xs bg-chat-code-apply hover:bg-chat-code-apply-hover rounded transition-colors select-none"
                           >
                             Apply to Editor
                           </button>
                           <button
                             @click="copyCode(block.content)"
-                            class="px-2 py-1 text-xs bg-chat-code-copy hover:bg-chat-code-copy-hover rounded transition-colors"
+                            class="px-2 py-1 text-xs bg-chat-code-copy hover:bg-chat-code-copy-hover rounded transition-colors select-none"
                           >
                             Copy
                           </button>
                         </div>
                       </div>
-                      <small v-if="chatSettings.showMessageInfo && message.timeTaken && message.tokenCount" class="text-chat-text-accent block mt-1">
+                      <small v-if="settingsStore.chatSettings.showMessageInfo && message.timeTaken && message.tokenCount" class="text-chat-text-accent block mt-1">
                         took {{ message.timeTaken }}s · ~{{ message.tokenCount }} tokens
                       </small>
-                      <small v-if="message.timestamp && chatSettings.showTimestamps" class="text-chat-text-accent block mt-1">
+                      <small v-if="message.timestamp && settingsStore.chatSettings.showTimestamps" class="text-chat-text-accent block mt-1">
                         {{ formatTime(message.timestamp) }}
                       </small>
                     </div>
@@ -706,10 +637,10 @@ export default {
                     <div 
                       v-else 
                       class="user-message bg-chat-accent p-3 rounded-lg text-text-primary shadow-lg"
-                      :class="{ 'p-2': uiSettings.compactView }"
+                      :class="{ 'p-2': settingsStore.uiSettings.compactView }"
                     >
                       <p>{{ message.content }}</p>
-                      <small v-if="message.timestamp && chatSettings.showTimestamps" class="text-chat-text-accent block mt-1 text-right">
+                      <small v-if="message.timestamp && settingsStore.chatSettings.showTimestamps" class="text-chat-text-accent block mt-1 text-right">
                         {{ formatTime(message.timestamp) }}
                       </small>
                     </div>
@@ -747,7 +678,7 @@ export default {
             <textarea
               v-model="userInput"
               placeholder="Ask a question..."
-              class="p-2 bg-chat-accent text-text-primary rounded-md w-full mb-2 resize-none"
+              class="p-2 bg-chat-accent text-text-primary rounded-md w-full mb-2 resize-none select-none"
               :style="editorHeightStyle"
               @keydown.enter.prevent="sendMessage"
               :disabled="processingResponse"
@@ -755,7 +686,7 @@ export default {
             
             <button
               @click="sendMessage"
-              class="p-2 bg-chat-secondary text-text-primary rounded-md w-full hover:bg-chat-primary transition shadow-lg"
+              class="p-2 bg-chat-secondary text-text-primary rounded-md w-full hover:bg-chat-primary transition shadow-lg select-none"
               :disabled="processingResponse || !userInput.trim()"
               :class="{ 'opacity-50 cursor-not-allowed': processingResponse || !userInput.trim() }"
             >
@@ -845,7 +776,7 @@ pre::-webkit-scrollbar-thumb,
 .hljs::-webkit-scrollbar-thumb,
 .ai-message pre::-webkit-scrollbar-thumb,
 .ai-message .hljs::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2) !important;
+  background: var(--ide-theme-secondary) !important;
   border-radius: 10px !important;
 }
 
@@ -854,7 +785,7 @@ pre::-webkit-scrollbar-thumb:hover,
 .hljs::-webkit-scrollbar-thumb:hover,
 .ai-message pre::-webkit-scrollbar-thumb:hover,
 .ai-message .hljs::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3) !important;
+  background: var(--ide-theme-secondary) !important;
 }
 
 .messages-container::-webkit-scrollbar-track,
@@ -872,7 +803,7 @@ pre,
 .ai-message pre,
 .ai-message .hljs {
   scrollbar-width: thin !important;
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent !important;
+  scrollbar-color: var(--ide-theme-secondary) transparent !important;
 }
 
 .fade-enter-active, .fade-leave-active {
