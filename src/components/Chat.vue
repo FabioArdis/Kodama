@@ -129,6 +129,10 @@ export default {
     initLLMClient() {
       this.llmClient = new LLMClient(this.settingsStore.llmConnection.selectedProvider);
       this.llmClient.setBaseUrl(this.settingsStore.llmConnection.baseUrl);
+      this.llmClient.setApiKey(this.settingsStore.llmConnection.apiKey);
+      this.llmClient.setHeaders({
+        'Authorization': `Bearer ${this.settingsStore.llmConnection.apiKey}`
+      });
     },
 
     applyHighlighting() {

@@ -305,6 +305,7 @@ export default {
         ref="sidebar" 
         @openFile="handleOpenFile" 
         @widthChanged="handleSidebarWidthChange" 
+        @launchSettings="handleOpenSettings"
       />
 
       <!-- Code Editor -->

@@ -1,5 +1,6 @@
 {
   "name": "Pastel Theme",
+  "isDark": false,
   "variables": {
     "--ide-theme-primary": "rgb(240 242 245)",
     "--ide-theme-secondary": "rgb(224 228 234)",

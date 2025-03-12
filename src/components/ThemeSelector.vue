@@ -19,7 +19,7 @@ function onThemeChange() {
 </script>
 
 <template>
-  <div class="bg-primary p-4 rounded-lg shadow-md">
+  <div class="bg-primary p-4 rounded-lg shadow-lg">
     <label for="theme-select" class="block text-sm font-medium text-text-primary mb-2">
       Theme Selection
     </label>

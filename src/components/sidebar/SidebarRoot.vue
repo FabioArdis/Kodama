@@ -15,7 +15,7 @@ export default {
     VcsPanel,
     RunPanel
   },
-  emits: ["projectOpened", "openFile", "widthChanged"],
+  emits: ["projectOpened", "openFile", "widthChanged", "launchSettings"],
   data() {
     return {
       expanded: false,
@@ -35,6 +35,9 @@ export default {
         vcs: { icon: "fa-code-branch", label: "Version Control" },
         run: { icon: "fa-play", label: "Run" },
       },
+      launchables: {
+        settings: { icon: "fa-cog", label: "Settings"},
+      }
     };
   },
   async mounted() {
@@ -52,6 +55,14 @@ export default {
     document.removeEventListener('mouseup', this.handleMouseUp);
   },
   methods: {
+    launch(launchable) {
+      console.log(launchable);
+      switch (launchable) {
+        case "settings" : {
+          this.$emit("launchSettings");
+        };
+      }
+    },
     toggleSidebar(menu) {
       if (this.activeMenu === menu) {
         this.expanded = !this.expanded;
@@ -323,9 +334,11 @@ export default {
     <!-- Sidebar Menu (Icons Bar) -->
     <SidebarMenu 
       :menus="menus" 
+      :launchables="launchables"
       :activeMenu="activeMenu" 
       :expanded="expanded" 
       @toggleMenu="toggleSidebar"
+      @launch="launch"
     />
 
     <!-- Panel Content -->

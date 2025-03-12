@@ -47,6 +47,7 @@ export type ProviderConfig = {
   streamTransform?: (data: any) => CompletionChunk;
   listTransform?: (data: any) => ModelInfo[];
   apiPath: string;
+  apiKey: string;
   listPath: string;
 };
 
@@ -55,6 +56,7 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
   ollama: {
     baseUrl: 'http://localhost:11434',
     apiPath: '/api/chat',
+    apiKey: '',
     listPath: '/api/tags',
     transformRequest: (options) => ({
       model: options.model,
@@ -81,6 +83,7 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
   koboldcpp: {
     baseUrl: 'http://localhost:5001',
     apiPath: '/api/v1/generate',
+    apiKey: '',
     listPath: '/api/v1/model',
     transformRequest: (options) => {
       // Convert messages to a prompt format KoboldCPP understands.
@@ -124,6 +127,55 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
       }
       return [];
     }
+  },
+  groq: {
+    baseUrl: "https://api.groq.com",
+    apiPath: "/openai/v1/chat/completions",
+    apiKey: '',
+    listPath: "/openai/v1/models",
+    transformRequest: (options) => ({
+      model: options.model,
+      messages: options.messages,
+      stream: options.stream,
+      temperature: options.parameters?.temperature,
+      top_p: options.parameters?.top_p,
+      max_tokens: options.parameters?.max_tokens,
+      presence_penalty: options.parameters?.presence_penalty,
+      frequency_penalty: options.parameters?.frequency_penalty,
+      stop: options.parameters?.stop
+    }),
+    transformResponse: (data) => ({
+      message: {
+        content: data.choices?.[0]?.message?.content || "",
+        role: data.choices?.[0]?.message?.role || "assistant"
+      }
+    }),
+    streamTransform: (data) => {
+      if (data.choices?.[0]?.finish_reason === "stop") {
+        return {
+          message: {
+            content: "",
+            role: "assistant"
+          },
+          done: true
+        };
+      }
+  
+      return {
+        message: {
+          content: data.choices?.[0]?.delta?.content || "",
+          role: data.choices?.[0]?.delta?.role || "assistant",
+        },
+        done: false
+      };
+    },
+    listTransform: (data) => {
+      return (data.data || []).map((model: any) => ({
+        name: model.id,
+        family: model.id.split('-')[0],
+        details: model
+      }));
+    }
   }
 };
 
@@ -150,6 +202,11 @@ export class LLMClient {
    */
   setBaseUrl(url: string): this {
     this.config.baseUrl = url;
+    return this;
+  }
+
+  setApiKey(key: string): this {
+    this.config.apiKey = key;
     return this;
   }
 
@@ -269,17 +326,34 @@ export class LLMClient {
         
         buffer += decoder.decode(value, { stream: true });
         
-        // Split by newlines and process each complete JSON object
+        // Split by newlines and process each complete line
         const lines = buffer.split('\n');
         buffer = lines.pop() || ""; // Keep the last potentially incomplete line
         
         for (const line of lines) {
           if (line.trim() === '') continue;
           
+          // Check for the "data: " prefix and extract the JSON
+          const dataMatch = line.match(/^data: (.+)$/);
+          if (!dataMatch) continue;
+          
+          const jsonStr = dataMatch[1];
+          
+          if (jsonStr.trim() === "[DONE]") {
+            yield {
+              message: {
+                content: "",
+                role: "assistant"
+              },
+              done: true
+            };
+            continue;
+          }
+          
           try {
-            const parsedLine = JSON.parse(line);
+            const parsedData = JSON.parse(jsonStr);
             const chunk = this.config.streamTransform ? 
-              this.config.streamTransform(parsedLine) : parsedLine;
+              this.config.streamTransform(parsedData) : parsedData;
             
             yield chunk;
           } catch (e) {
@@ -290,14 +364,29 @@ export class LLMClient {
       
       // Handle any remaining data in the buffer
       if (buffer.trim()) {
-        try {
-          const parsedLine = JSON.parse(buffer);
-          const chunk = this.config.streamTransform ? 
-            this.config.streamTransform(parsedLine) : parsedLine;
+        const dataMatch = buffer.match(/^data: (.+)$/);
+        if (dataMatch) {
+          const jsonStr = dataMatch[1];
           
-          yield chunk;
-        } catch (e) {
-          console.warn('Error parsing remaining JSON from stream:', e);
+          if (jsonStr.trim() === "[DONE]") {
+            yield {
+              message: {
+                content: "",
+                role: "assistant"
+              },
+              done: true
+            };
+          } else {
+            try {
+              const parsedData = JSON.parse(jsonStr);
+              const chunk = this.config.streamTransform ? 
+                this.config.streamTransform(parsedData) : parsedData;
+              
+              yield chunk;
+            } catch (e) {
+              console.warn('Error parsing remaining JSON from stream:', e);
+            }
+          }
         }
       }
     } finally {
@@ -316,5 +405,6 @@ export class LLMClient {
 // TODO: Export predefined providers for convenience, might replace it with a better solution.
 export const PROVIDERS = {
   OLLAMA: 'ollama',
-  KOBOLD_CPP: 'koboldcpp'
+  KOBOLD_CPP: 'koboldcpp',
+  GROQ: "groq"
 };

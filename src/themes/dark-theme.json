@@ -1,5 +1,6 @@
 {
   "name": "Dark Theme",
+  "isDark": true,
   "variables": {
     "--ide-theme-primary": "rgb(38 38 38)",
     "--ide-theme-secondary": "rgb(23 23 23)",

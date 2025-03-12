@@ -1,5 +1,6 @@
 {
   "name": "Sunset Theme",
+  "isDark": true,
   "variables": {
     "--ide-theme-primary": "#4a2c3f",
     "--ide-theme-secondary": "#3a1e30",

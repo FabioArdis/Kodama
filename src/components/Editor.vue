@@ -3,6 +3,7 @@ import { markRaw } from 'vue';
 import Settings from "../Settings.vue";
 import { VueMonacoEditor } from "@guolao/vue-monaco-editor";
 import { readTextFile } from '@tauri-apps/plugin-fs';
+import { useThemeService } from '../services/themeService';
 
 export default {
   components: { Settings, VueMonacoEditor },
@@ -12,13 +13,17 @@ export default {
       default: null
     }
   },
+  setup() {
+    const themeService = useThemeService();
+    return { themeService };
+  },
   data() {
     return {
       tabs: [],
       activeTab: 0,
       nextTabId: 1,
       editorOptions: {
-        theme: 'vs-dark',
+        theme: this.themeService.isCurrentThemeDark.value ? 'vs-dark' : 'vs-light',
         automaticLayout: true,
         fontSize: 14,
         tabSize: 2,
@@ -44,6 +49,12 @@ export default {
     };
   },
   computed: {
+    editorOptions() {
+      return {
+        ...this.editorOptions,
+        theme: this.themeService.isCurrentThemeDark.value ? 'vs-dark' : 'vs-light'
+      };
+    },
     activeTabData() {
       return this.tabs.find(tab => tab.id === this.activeTab) || null;
     },
@@ -116,6 +127,7 @@ export default {
         this.closeTab(tabId);
       }
     },
+
     async openFile(file) {
       try{
         console.info("file.path", file.path);
@@ -235,6 +247,15 @@ export default {
     handleEditorMount(editor) {
       console.log("Editor mounted:", editor);
       this.editor = markRaw(editor);
+
+      this.$watch(
+        () => this.themeService.isCurrentThemeDark.value,
+        (isDark) => {
+          if (this.editor) {
+            this.editor.updateOptions({ theme: isDark ? 'vs-dark' : 'vs-light' });
+          }
+        }
+      );
       
       editor.onDidChangeCursorSelection((e) => {
         const selection = editor.getSelection();

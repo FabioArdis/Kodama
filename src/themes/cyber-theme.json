@@ -1,5 +1,6 @@
 {
   "name": "Cyber Theme",
+  "isDark": true,
   "variables": {
     "--ide-theme-primary": "#142124",
     "--ide-theme-secondary": "#0d1618",

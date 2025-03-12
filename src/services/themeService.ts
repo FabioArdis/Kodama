@@ -2,6 +2,7 @@ import { ref, reactive, watch } from 'vue';
 
 export interface Theme {
   name: string;
+  isDark: boolean;
   variables: Record<string, string>;
 }
 
@@ -13,6 +14,7 @@ const THEME_STORAGE_KEY = 'appSelectedTheme';
 
 const availableThemes = ref<Theme[]>([]);
 const currentThemeName = ref<string | null>(null);
+const isCurrentThemeDark = ref<boolean>(false);
 const currentThemeVariables = reactive<Record<string, string>>({});
 
 async function loadThemes() {
@@ -47,6 +49,7 @@ function setTheme(themeName: string) {
   localStorage.setItem(THEME_STORAGE_KEY, themeName);
   
   currentThemeName.value = themeName;
+  isCurrentThemeDark.value = themeToApply.isDark;
   Object.assign(currentThemeVariables, themeToApply.variables);
 }
 
@@ -83,6 +86,7 @@ export function useThemeService() {
     availableThemes,
     currentThemeName,
     currentThemeVariables,
+    isCurrentThemeDark,
     loadThemes,
     setTheme,
     initializeTheme,

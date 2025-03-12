@@ -1,5 +1,6 @@
 {
   "name": "Sirde Theme",
+  "isDark": false,
   "variables": {
     "--ide-theme-primary": "#fffbe6",
     "--ide-theme-secondary": "#fff8cc",

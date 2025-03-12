@@ -15,6 +15,7 @@ export const useSettingsStore = defineStore('settings', {
       selectedModel: localStorage.getItem("selectedModel") || "",
       selectedProvider: localStorage.getItem("selectedProvider") || PROVIDERS.OLLAMA,
       baseUrl: localStorage.getItem("baseUrl") || "http://localhost:11434",
+      apiKey: localStorage.getItem("apiKey") || "",
       llmStatus: JSON.parse(localStorage.getItem("llmStatus") || JSON.stringify({
         status: "offline",
         message: "Offline",
@@ -165,6 +166,7 @@ export const useSettingsStore = defineStore('settings', {
           localStorage.setItem('selectedModel', this.llmConnection.selectedModel);
           localStorage.setItem('selectedProvider', this.llmConnection.selectedProvider);
           localStorage.setItem('baseUrl', this.llmConnection.baseUrl);
+          localStorage.setItem('apiKey', this.llmConnection.apiKey);
           localStorage.setItem('llmStatus', JSON.stringify(this.llmConnection.llmStatus));
           break;
         case 'modelParameters':

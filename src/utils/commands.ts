@@ -98,13 +98,13 @@ export function registerDefaultCommands(callbacks: {
       shortcut: 'Ctrl+Alt+Enter',
       execute: () => callbacks.toggleImmersiveMode?.()
     },
-    {
+    /* {
       id: 'view.setTheme',
       title: 'Set Theme',
       category: 'View',
       shortcut: 'Ctrl+T',
       execute: () => callbacks.openThemeSelector?.()
-    }
+    } */
   ];
 
   commandRegistry.registerAll(defaultCommands);

@@ -1,5 +1,6 @@
 {
   "name": "Pastel Purple Theme",
+  "isDark": false,
   "variables": {
     "--ide-theme-primary": "#f3eeff",
     "--ide-theme-secondary": "#e6dbff",

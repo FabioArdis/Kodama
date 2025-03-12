@@ -37,6 +37,10 @@ export default {
         llmClient.value = new LLMClient(settingsStore.llmConnection.selectedProvider);
         if (llmClient.value) {
           llmClient.value.setBaseUrl(settingsStore.llmConnection.baseUrl);
+          llmClient.value.setApiKey(settingsStore.llmConnection.apiKey);
+          llmClient.value.setHeaders({
+            'Authorization': `Bearer ${settingsStore.llmConnection.apiKey}`
+          });
         }
       } catch (error: unknown) {
         console.error("Error initializing LLM client:", error);
@@ -148,6 +152,16 @@ export default {
       }
     };
 
+    const updateApiKey = () => {
+      if (settingsStore.llmConnection.apiKey && llmClient.value) {
+        llmClient.value?.setHeaders({
+          'Authorization': `Bearer ${settingsStore.llmConnection.apiKey}`
+        })
+        llmClient.value.setApiKey(settingsStore.llmConnection.apiKey);
+        checkLLMStatus();
+      }
+    };
+
     const addQuickPrompt = () => {
       if (newQuickPromptTitle.value && newQuickPromptContent.value) {
         settingsStore.addQuickPrompt({
@@ -229,6 +243,7 @@ export default {
       refreshModels,
       updateProvider,
       updateBaseUrl,
+      updateApiKey,
       addQuickPrompt,
       addStopSequence,
       showToast,
@@ -345,7 +360,7 @@ export default {
           <div class="bg-primary rounded-lg p-4 shadow-lg border border-border-accent">
             <h3 class="font-semibold mb-3">Provider Settings</h3>
             
-            <div class="space-y-3">
+            <div class="space-y-3 w-full">
               <div>
                 <label for="provider" class="block mb-1 text-sm font-medium">Provider:</label>
                 <select 
@@ -366,10 +381,29 @@ export default {
                     v-model="settingsStore.llmConnection.baseUrl" 
                     type="text" 
                     placeholder="http://localhost:11434"
-                    class="flex-1 bg-accent border border-border-accent text-text-primary p-2 rounded-md focus:outline-none focus:ring-1 text-sm"
+                    class="w-full flex-1 bg-accent border border-border-accent text-text-primary p-2 rounded-md focus:outline-none focus:ring-1 text-sm"
                   />
                   <button 
                     @click="updateBaseUrl" 
+                    class="px-3 bg-accent hover:bg-accent-hover rounded-md transition-colors"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label for="baseUrl" class="block mb-1 text-sm font-medium ">API Key:</label>
+                <div class="flex gap-2">
+                  <input 
+                    id="baseUrl" 
+                    v-model="settingsStore.llmConnection.apiKey" 
+                    type="text" 
+                    placeholder="Insert your API Key here..."
+                    class="w-full flex-1 bg-accent border border-border-accent text-text-primary p-2 rounded-md focus:outline-none focus:ring-1 text-sm"
+                  />
+                  <button 
+                    @click="updateApiKey" 
                     class="px-3 bg-accent hover:bg-accent-hover rounded-md transition-colors"
                   >
                     Apply

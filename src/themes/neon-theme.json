@@ -1,5 +1,6 @@
 {
   "name": "Neon Theme",
+  "isDark": true,
   "variables": {
     "--ide-theme-primary": "#1a1a2e",
     "--ide-theme-secondary": "#16161f",

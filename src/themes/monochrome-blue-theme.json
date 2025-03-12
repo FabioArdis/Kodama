@@ -1,5 +1,6 @@
 {
   "name": "Monochrome Blue Theme",
+  "isDark": false,
   "variables": {
     "--ide-theme-primary": "rgb(235 240 249)",
     "--ide-theme-secondary": "rgb(210 224 245)",
