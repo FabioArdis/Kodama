@@ -50,6 +50,7 @@ export default {
         selection: null as string | null,
       },
       llmClient: null as LLMClient | null,
+      selectedModel: "",
     };
   },
   computed: {
@@ -127,6 +128,7 @@ export default {
   },
   methods: {
     initLLMClient() {
+      this.selectedModel = this.settingsStore.llmConnection.selectedModel;
       this.llmClient = new LLMClient(this.settingsStore.llmConnection.selectedProvider);
       this.llmClient.setBaseUrl(this.settingsStore.llmConnection.baseUrl);
       this.llmClient.setApiKey(this.settingsStore.llmConnection.apiKey);
@@ -224,6 +226,9 @@ export default {
     },
 
     async sendMessage() {
+      if (this.selectedModel != this.settingsStore.llmConnection.selectedModel) {
+        this.initLLMClient();
+      }
       if (this.userInput.trim() && !this.processingResponse) {
         this.processingResponse = true;
         const messageId = Date.now();

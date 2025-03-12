@@ -37,11 +37,11 @@ export default {
         y: 0,
         selectedText: "",
         actions: [
-          { id: 'explain', label: 'Explain Code' },
-          { id: 'comment', label: 'Add Comments' },
+          { id: 'explain', label: 'Explain' },
+          { id: 'comment', label: 'Comment' },
           { id: 'refactor', label: 'Refactor' },
           { id: 'optimize', label: 'Optimize' },
-          { id: 'debug', label: 'Debug Issues' }
+          { id: 'debug', label: 'Debug' }
         ]
       },
       selectionActive: false,
@@ -268,20 +268,8 @@ export default {
             this.aiContextMenu.selectedText = selectedText;
             this.selectionActive = true;
             
-            const endPosition = selection.getEndPosition();
-            const endCoordinates = editor.getScrolledVisiblePosition(endPosition);
-            
-            if (endCoordinates) {
-              const editorDomNode = editor.getDomNode();
-
-              if (editorDomNode) {
-                const rect = editorDomNode.getBoundingClientRect();
-
-                this.aiContextMenu.x = rect.left + endCoordinates.left;
-                this.aiContextMenu.y = rect.top + endCoordinates.top + 20; // Add some space below
-                this.aiContextMenu.show = true;
-              }
-            }
+            // Fixed position will do for now. TODO: find a better solution for the floating context menu.
+            this.aiContextMenu.show = false;
           }
         } else {
           this.selectionActive = false;
@@ -289,7 +277,7 @@ export default {
         }
       });
       
-      // Hide menu when clicking elsewhere (except on the menu itself)
+      // Hide menu when clicking elsewhere
       editor.onMouseDown((e) => {
         const targetElement = e.target.element;
         if (!targetElement.closest('.ai-context-menu')) {
@@ -450,38 +438,32 @@ export default {
       </div>
     </div>
     
-    <!-- AI Contextual Menu -->
-    <div v-if="aiContextMenu.show" 
-         class="ai-context-menu absolute z-50 bg-primary rounded-lg shadow-lg border border-border-accent"
-         :style="{ left: `${aiContextMenu.x}px`, top: `${aiContextMenu.y}px` }">
-      <div class="p-2 border-b border-border-accent text-xs font-medium">AI Actions</div>
-      <div class="max-h-60 overflow-y-auto">
-        <div v-for="action in aiContextMenu.actions" 
-             :key="action.id" 
-             @click="handleAiAction(action.id)"
-             class="px-4 py-2 hover:bg-accent cursor-pointer text-sm">
+    <!-- Fixed AI Contextual Menu -->
+    <transition name="fade">
+      <div v-if="selectionActive" 
+          class="fixed bottom-12 left-1/2 transform -translate-x-1/2 bg-secondary rounded-full shadow-lg border border-border-accent px-2 py-1 flex space-x-1 z-50">
+        <button 
+          v-for="action in aiContextMenu.actions"
+          :key="action.id"
+          @click="handleAiAction(action.id)"
+          class="px-3 py-1 rounded-full hover:bg-accent text-xs font-medium transition-colors"
+        >
           {{ action.label }}
-        </div>
+        </button>
       </div>
-    </div>
-    
-    <!-- Alternative, fixed AI Contextual Menu -->
-    <div v-if="selectionActive && !aiContextMenu.show" 
-         class="fixed bottom-12 left-1/2 transform -translate-x-1/2 bg-primary rounded-full shadow-lg border border-border-accent px-4 py-2 flex space-x-2 z-50">
-      <button 
-        v-for="action in aiContextMenu.actions"
-        :key="action.id"
-        @click="handleAiAction(action.id)"
-        class="px-3 py-1 rounded-full hover:bg-accent text-xs font-medium"
-      >
-        {{ action.label }}
-      </button>
-    </div>
+    </transition>
   </main>
 </template>
 
 <style scoped>
 @import "tailwindcss";
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
 
 :deep(.monaco-editor) {
   outline: none !important;
