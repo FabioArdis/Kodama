@@ -19,7 +19,7 @@
     "fs:allow-appconfig-write",
     "fs:allow-write-text-file",
     {
-      "identifier" : "fs:read-all",
+      "identifier": "fs:read-all",
       "allow": [
         {
           "path": "**"
@@ -27,12 +27,13 @@
       ]
     },
     {
-      "identifier" : "fs:write-all",
+      "identifier": "fs:write-all",
       "allow": [
         {
           "path": "**"
         }
       ]
-    }
+    },
+    "opener:default"
   ]
 }

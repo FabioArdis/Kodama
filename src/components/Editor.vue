@@ -1,12 +1,16 @@
 <script>
 import { markRaw } from 'vue';
 import Settings from "../Settings.vue";
+import About from '../About.vue';
 import { VueMonacoEditor } from "@guolao/vue-monaco-editor";
-import { readTextFile } from '@tauri-apps/plugin-fs';
+import { readTextFile, writeTextFile, mkdir, exists, BaseDirectory } from '@tauri-apps/plugin-fs';
+import { save, confirm, message } from '@tauri-apps/plugin-dialog';
 import { useThemeService } from '../services/themeService';
+import { appConfigDir } from '@tauri-apps/api/path';
 
 export default {
-  components: { Settings, VueMonacoEditor },
+  emits: ["openFileDialog"],
+  components: { Settings, VueMonacoEditor, About },
   props: {
     chatRef: {
       type: Object,
@@ -45,8 +49,22 @@ export default {
         ]
       },
       selectionActive: false,
-      showWelcomeScreen: true
+      showWelcomeScreen: true,
+      keyboardShortcuts: {
+        'Control+s': this.saveCurrentTab,
+        'Meta+s': this.saveCurrentTab
+      },
+      recentFiles: [],
+      maxRecentFiles: 10,
     };
+  },
+  async created() {
+    window.addEventListener("keydown", this.handleKeydown);
+
+    await this.loadRecentFiles();
+  },
+  beforeUnmount() {
+    window.removeEventListener("keydown", this.handleKeydown);
   },
   computed: {
     editorOptions() {
@@ -74,6 +92,87 @@ export default {
     }
   },
   methods: {
+    async loadRecentFiles() {
+      try {
+        const configDir = await appConfigDir();
+        try {
+          const content = await readTextFile(`${configDir}/recent_files.json`);
+          this.recentFiles = JSON.parse(content);
+        } catch (e) {
+          this.recentFiles = [];
+          await mkdir(configDir, { recursive: true });
+        }
+      } catch (error) {
+        console.error("Error loading recent files:", error);
+        this.recentFiles = [];
+      }
+    },
+
+    async saveRecentFiles() {
+      try {
+        const configDir = await appConfigDir();
+        await writeTextFile(
+          `${configDir}/recent_files.json`,
+          JSON.stringify(this.recentFiles),
+        );
+      } catch (error) {
+        console.error("Error saving recent files:", error);
+      }
+    },
+
+    addToRecentFiles(filePath, fileName) {
+      this.recentFiles = this.recentFiles.filter(file => file.path !== filePath);
+      
+      this.recentFiles.unshift({
+        path: filePath,
+        name: fileName,
+        lastOpened: new Date().toISOString()
+      });
+      
+      if (this.recentFiles.length > this.maxRecentFiles) {
+        this.recentFiles = this.recentFiles.slice(0, this.maxRecentFiles);
+      }
+      
+      this.saveRecentFiles();
+    },
+
+    async openRecentFile(filePath) {
+      try {
+        const pathParts = filePath.split(/[/\\]/);
+        const fileName = pathParts[pathParts.length - 1];
+        
+        const success = await this.openFile({ path: filePath, name: fileName });
+        if (success) {
+          this.addToRecentFiles(filePath, fileName);
+        }
+        return success;
+      } catch (error) {
+        console.error("Error opening recent file:", error);
+        return false;
+      }
+    },
+
+    clearRecentFiles() {
+      this.recentFiles = [];
+      this.saveRecentFiles();
+    },
+
+    removeRecentFile(file) {
+      this.recentFiles = this.recentFiles.filter(f => f.path !== file.path);
+      
+      this.saveRecentFiles();
+    },
+
+    handleKeydown(event) {
+      if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+        event.preventDefault();
+        this.saveCurrentTab();
+      }
+      if ((event.ctrlKey || event.metaKey) && event.key === 'n') {
+        event.preventDefault();
+        this.addTab();
+      }
+    },
     showToast(message, type) {
       const toast = document.createElement("div");
       
@@ -148,12 +247,15 @@ export default {
             content: content,
             type: "editor",
             language: language,
-            path: file.path
+            path: file.path,
+            unsaved: false
           });
 
           this.activeTab = this.nextTabId;
           this.nextTabId++;
         }
+        this.addToRecentFiles(file.path, file.name);
+
         this.showWelcomeScreen = false;
         return true;
       } catch (error) {
@@ -174,7 +276,8 @@ export default {
         name: tabName, 
         content: "", 
         type: "editor",
-        language
+        language,
+        unsaved: true
       });
 
       this.activeTab = this.nextTabId;
@@ -199,7 +302,8 @@ export default {
         name, 
         content: "", 
         type,
-        language 
+        language,
+        unsaved: false
       });
 
       this.activeTab = this.nextTabId;
@@ -207,7 +311,20 @@ export default {
       this.showWelcomeScreen = false;
     },
     
-    closeTab(id) {
+    async closeTab(id) {
+      const tab = this.tabs.find(tab => tab.id === id);
+      
+      if (tab && tab.unsaved) {
+        const confirmed = await confirm(
+          `Save changes to ${tab.name}?`,
+          { title: "Unsaved Changes", type: "warning" }
+        );
+
+        if (confirmed) {
+          await this.saveCurrentTab();
+        }
+      }
+
       this.tabs = this.tabs.filter(tab => tab.id !== id);
       if (this.tabs.length === 0) {
         this.showWelcomeScreen = true;
@@ -218,7 +335,11 @@ export default {
     },
     
     handleEditorChange(value) {
-      this.activeTabContent = value;
+      const activeTabIndex = this.tabs.findIndex(tab => tab.id === this.activeTab);
+      if (activeTabIndex !== -1) {
+        this.tabs[activeTabIndex].content = value;
+        this.tabs[activeTabIndex].unsaved = true;
+      }
     },
     
     detectLanguage(filename) {
@@ -372,6 +493,68 @@ export default {
       this.editor.focus();
 
       return true;
+    },
+
+    async saveCurrentTab() {
+      const tab = this.tabs.find(tab => tab.id === this.activeTab);
+
+      if (!tab) return;
+
+      try {
+        if (!tab.path) {
+          await this.saveTabAs(tab);
+        } else {
+          await this.saveTabToPath(tab, tab.path);
+        }
+      } catch (error) {
+        console.error("Error saving file:", error);
+        this.showToast("Error saving file: " + error.message, "error");
+      }
+    },
+
+    async saveTabAs(tab) {
+      try {
+        const filePath = await save({
+          filters: [{
+            name: "All Files",
+            extensions: ["*"]
+          }]
+        });
+
+        if (filePath) {
+          await this.saveTabToPath(tab, filePath);
+        }
+      } catch (error) {
+        console.error("Save dialog error:", error);
+        throw error;
+      }
+    },
+
+    async saveTabToPath(tab, path) {
+      try {
+        await writeTextFile(path, tab.content);
+
+        const tabIndex = this.tabs.findIndex(t => t.id === tab.id);
+        if (tabIndex !== -1) {
+          const pathParts = path.split(/[/\\]/);
+          const fileName = pathParts[pathParts.length - 1];
+          
+          if (!tab.path) {
+            this.tabs[tabIndex].name = fileName;
+          }
+          
+          this.tabs[tabIndex].path = path;
+          
+          this.tabs[tabIndex].language = this.detectLanguage(fileName);
+          
+          this.tabs[tabIndex].unsaved = false;
+        }
+        
+        this.showToast("File saved successfully", "success");
+      } catch (error) {
+        console.error("Error writing file:", error);
+        throw error;
+      }
     }
   }
 };
@@ -383,9 +566,10 @@ export default {
   <main class="flex-1 relative w-full h-full overflow-hidden flex flex-col rounded-4xl select-none">
     <div class="bg-secondary p-2 flex items-center h-12">
       <div v-for="tab in tabs" :key="tab.id" class="mx-1 text-xs px-4 py-2 cursor-pointer" 
-           :class="{ 'bg-accent-hover rounded-xl outline outline-accent shadow-md': activeTab === tab.id }"
-           @mousedown="handleTabMouseDown($event, tab.id)"
-           @click="activeTab = tab.id">
+        :class="{ 'bg-accent-hover rounded-xl outline outline-accent shadow-md': activeTab === tab.id }"
+        @mousedown="handleTabMouseDown($event, tab.id)"
+        @click="activeTab = tab.id">
+        <span v-if="tab.unsaved" class="mr-1">●</span>
         <span>{{ tab.name }}</span>
         <span class="ml-2 cursor-pointer" @click.stop="closeTab(tab.id)">&times;</span>
       </div>
@@ -409,16 +593,53 @@ export default {
           <span>New File</span>
         </button>
         <button 
-          @click="$emit('open-file-dialog')" 
+          @click="$emit('openFileDialog')" 
           class="flex items-center justify-center gap-3 py-3 px-4 bg-primary hover:bg-accent rounded-xl transition-colors w-full border border-border-accent shadow-md"
         >
           <i class="fas fa-file text-xl"></i>
           <span>Open File</span>
         </button>
       </div>
-      <div class="mt-8 px-4 py-4 bg-primary rounded-xl w-full max-w-md border border-border-accent shadow-md">
-        <div class="text-lg font-medium mb-2 text-center">Recent Files</div>
-        <div class="text-sm text-text-secondary text-center">No recent files</div>
+
+      <div class="mt-8 px-6 py-5 bg-primary rounded-2xl w-full max-w-md border border-border-accent shadow-lg">
+        <div class="flex-col text-xl font-bold mb-4 text-text-accent text-center flex items-center justify-center">
+          Recent Files
+          <button v-if="recentFiles.length > 0"
+          @click="clearRecentFiles"
+          class="my-2 text-xs bg-primary border text-text-accent hover:text-red-500 px-2 py-1 rounded-4xl transition-all"
+          title="Clear all recent projects"
+          >
+            Clear History
+          </button>
+        </div>        
+        
+        <div v-if="recentFiles.length > 0" class="justify-center max-h-64 overflow-y-auto space-y-2">
+          <ul>
+            <li v-for="file in recentFiles" :key="file.path" 
+                class="py-3 px-4 hover:bg-secondary rounded-lg transition-all duration-200 cursor-pointer group">
+              <div class="flex items-center">
+                <div @click="openRecentFile(file.path)" class="ml-3 flex-1">
+                  <p class="text-sm font-medium text-text-accent">{{ file.name }}</p>
+                  <p class="text-xs text-text-primary truncate max-w-xs">{{ file.path }}</p>
+                </div>
+                <button 
+              @click="removeRecentFile(file)"
+              class="text-text-secondary opacity-0 hover:text-red-500 group-hover:opacity-100 p-1 transition-opacity"
+              title="Remove from recent projects"
+            >
+              <i class="fas fa-times text-xs"></i>
+            </button>
+              </div>
+            </li>
+          </ul>
+        </div>
+        
+        <div v-else class="py-8 text-sm text-text-accent text-center flex flex-col items-center">
+          No recent files
+          <button @click="$emit('openFileDialog')" class="shadow-md mt-3 px-4 py-2 bg-accent hover:bg-secondary rounded-lg text-xs font-medium transition-colors duration-200 border border-border-accent">
+            Open File
+          </button>
+        </div>
       </div>
     </div>
 
@@ -435,6 +656,7 @@ export default {
           class="w-full h-full"
         />
         <Settings v-else-if="tab.type === 'settings'" />
+        <About v-else-if="tab.type === 'about'" />
       </div>
     </div>
     

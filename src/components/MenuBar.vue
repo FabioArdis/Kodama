@@ -6,7 +6,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 const appWindow = getCurrentWindow();
 
 export default {
-  emits: ["newFile", "openFileDialog", "openSettings", "openProject"],
+  emits: ["newFile", "openFileDialog", "openSettings", "openProject", "saveFile", "openAbout"],
   methods: {
     newFile() {
       this.$emit("newFile");
@@ -14,8 +14,14 @@ export default {
     openSettings() {
       this.$emit("openSettings");
     },
+    openAbout() {
+      this.$emit("openAbout");
+    },
     openFile() {
       this.$emit("openFileDialog");
+    },
+    saveFile() {
+      this.$emit("saveFile");
     },
     async exitApp() {
       try {
@@ -56,25 +62,26 @@ export default {
 
       <nav class="px-4 flex space-x-4">
         <div class="relative group">
-          <button class="px-3 py-1 bg-secondary hover:bg-accent transition-colors rounded-2xl shadow-lg border border-border-accent">File</button>
+          <button class="px-3 py-1 bg-secondary hover:bg-accent transition-colors rounded-xl shadow-lg border border-border-accent">File</button>
           <div
-              class="absolute left-0 min-w-[150px] hidden group-hover:block outline-2 outline-accent bg-secondary shadow-lg rounded-md z-50"
+              class="absolute left-0 min-w-[150px] hidden text-xs group-hover:block outline-2 outline-accent bg-secondary shadow-lg rounded-md z-50"
           >
-            <ul class="p-2">
-              <li @click="newFile" class="px-3 py-2 hover:bg-primary cursor-pointer rounded">New File</li>
-              <li @click="openFile" class="px-3 py-2 hover:bg-primary cursor-pointer rounded">Open File...</li>
-              <li class="border-t border-border-secondary my-1"></li>
-              <li @click="openProject" class="px-3 py-2 hover:bg-primary cursor-pointer rounded">Open Project...</li>
-              <li class="border-t border-border-secondary my-1"></li>
-              <li @click="openSettings" class="px-3 py-2 hover:bg-primary cursor-pointer rounded">Settings</li>
-              <li class="border-t border-border-secondary my-1"></li>
-              <li class="px-3 py-2 hover:bg-primary cursor-pointer rounded">Save</li>
-              <li class="border-t border-border-secondary my-1"></li>
-              <li @click="exitApp" class="px-3 py-2 hover:bg-primary cursor-pointer rounded">Exit</li>
+            <ul class="p-1">
+              <li @click="newFile" class="px-3 py-1 hover:bg-primary cursor-pointer rounded">New File</li>
+              <li @click="openFile" class="px-3 py-1 hover:bg-primary cursor-pointer rounded">Open File...</li>
+              <li class="border-t border-border-accent my-1"></li>
+              <li @click="openProject" class="px-3 py-1 hover:bg-primary cursor-pointer rounded">Open Project...</li>
+              <li class="border-t border-border-accent my-1"></li>
+              <li @click="openSettings" class="px-3 py-1 hover:bg-primary cursor-pointer rounded">Settings</li>
+              <li class="border-t border-border-accent my-1"></li>
+              <li @click="saveFile" class="px-3 py-1 hover:bg-primary cursor-pointer rounded">Save</li>
+              <li class="border-t border-border-accent my-1"></li>
+              <li @click="exitApp" class="px-3 py-1 hover:bg-primary cursor-pointer rounded">Exit</li>
             </ul>
           </div>
         </div>
 
+        <!-- We will come back to this later. Shortcuts work anyways.
         <div class="relative group">
           <button class="px-3 py-1 bg-secondary hover:hover:bg-accent transition-colors rounded-2xl shadow-lg border border-border-accent">Edit</button>
           <div
@@ -87,6 +94,17 @@ export default {
               <li class="px-3 py-2 hover:bg-primary cursor-pointer rounded">Cut</li>
               <li class="px-3 py-2 hover:bg-primary cursor-pointer rounded">Copy</li>
               <li class="px-3 py-2 hover:bg-primary cursor-pointer rounded">Paste</li>
+            </ul>
+          </div>
+        </div> -->
+
+        <div class="relative group">
+          <button class="px-3 py-1 bg-secondary hover:bg-accent transition-colors rounded-xl shadow-lg border border-border-accent">Help</button>
+          <div
+              class="absolute left-0 min-w-[150px] hidden text-xs group-hover:block outline-2 outline-accent bg-secondary shadow-lg rounded-md z-50"
+          >
+            <ul class="p-1">
+              <li @click="openAbout" class="px-3 py-1 hover:bg-primary cursor-pointer rounded">About</li>
             </ul>
           </div>
         </div>

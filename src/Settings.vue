@@ -380,7 +380,7 @@ export default {
                     id="baseUrl" 
                     v-model="settingsStore.llmConnection.baseUrl" 
                     type="text" 
-                    placeholder="http://localhost:11434"
+                    placeholder=""
                     class="w-full flex-1 bg-accent border border-border-accent text-text-primary p-2 rounded-md focus:outline-none focus:ring-1 text-sm"
                   />
                   <button 

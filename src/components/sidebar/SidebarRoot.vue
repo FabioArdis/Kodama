@@ -32,7 +32,7 @@ export default {
       menus: {
         explorer: { icon: "fa-file-alt", label: "Explorer" },
         search: { icon: "fa-search", label: "Search" },
-        vcs: { icon: "fa-code-branch", label: "Version Control" },
+        /* vcs: { icon: "fa-code-branch", label: "Version Control" }, */
         run: { icon: "fa-play", label: "Run" },
       },
       launchables: {

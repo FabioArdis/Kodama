@@ -16,7 +16,7 @@
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "~2",
     "@tauri-apps/plugin-fs": "~2",
-    "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-opener": "^2.2.5",
     "@tauri-apps/plugin-process": "~2",
     "dompurify": "^3.2.4",
     "highlight.js": "^11.11.1",

@@ -249,12 +249,20 @@ export default {
     handleNewFile() {
       this.$refs.editor.addTab();
     },
+
+    handleSaveFile() {
+      this.$refs.editor.saveCurrentTab();
+    },
     
     /**
      * Opens the settings tab in the editor
      */
     handleOpenSettings() {
       this.$refs.editor.openTab("Settings", "settings");
+    },
+
+    handleOpenAbout() {
+      this.$refs.editor.openTab("About", "about");
     },
     
     /**
@@ -290,7 +298,13 @@ export default {
   <div class="flex flex-col h-screen bg-primary text-text-primary"
     :class="{ 'overflow-hidden': immersiveMode }">
     <!-- Top menu bar component -->
-    <MenuBar v-if="!immersiveMode" @newFile="handleNewFile" @openFileDialog="handleOpenFileDialog" @openSettings="handleOpenSettings" @openProject="handleOpenProject" />
+    <MenuBar v-if="!immersiveMode" 
+      @newFile="handleNewFile" 
+      @openFileDialog="handleOpenFileDialog" 
+      @openSettings="handleOpenSettings" 
+      @openProject="handleOpenProject" 
+      @saveFile="handleSaveFile"
+      @openAbout="handleOpenAbout"/>
     
     <!-- Components in the middle -->
     <div class="flex flex-1 overflow-hidden relative p-3"
@@ -322,6 +336,7 @@ export default {
           'shadow-2xl': immersiveMode,
           'mx-auto': immersiveMode
         }"
+        @openFileDialog="handleOpenFileDialog"
       />
 
       <!-- Chat interface -->
