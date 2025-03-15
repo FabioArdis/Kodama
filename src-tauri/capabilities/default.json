@@ -33,7 +33,6 @@
           "path": "**"
         }
       ]
-    },
-    "opener:default"
+    }
   ]
 }
