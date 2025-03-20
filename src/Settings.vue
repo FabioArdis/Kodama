@@ -805,7 +805,7 @@ export default {
           </div>
 
           <!-- Display Formatting -->
-          <div class="bg-primary rounded-lg p-4 shadow-lg border border-border-accent">
+          <!-- <div class="bg-primary rounded-lg p-4 shadow-lg border border-border-accent">
             <h2 class="text-xl font-semibold mb-4">Display Formatting</h2>
             
             <div class="mb-4">
@@ -833,7 +833,7 @@ export default {
                 <option value="minimal">Minimal</option>
               </select>
             </div>
-          </div>
+          </div> -->
 
           <!-- Layout Settings -->
           <div class="bg-primary rounded-lg p-4 shadow-lg border border-border-accent">
@@ -849,7 +849,7 @@ export default {
               <label for="compactView" class="font-medium">Compact View</label>
             </div>
             
-            <div class="mb-4">
+            <!-- <div class="mb-4">
               <label for="sidebarPosition" class="block mb-2 font-medium">Sidebar Position:</label>
               <select 
                 id="sidebarPosition" 
@@ -859,7 +859,7 @@ export default {
                 <option value="left">Left</option>
                 <option value="right">Right</option>
               </select>
-            </div>
+            </div> -->
           </div>
         </div>
       </div>
@@ -875,7 +875,7 @@ export default {
         <!-- Chat-Saving-Export-Privacy settings -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <!-- Chat History -->
-          <div class="bg-primary rounded-lg p-4 shadow-lg border border-border-accent">
+          <!-- <div class="bg-primary rounded-lg p-4 shadow-lg border border-border-accent">
             <h2 class="text-xl font-semibold mb-4">Chat History</h2>
     
             <div class="flex items-center mb-4">
@@ -900,7 +900,7 @@ export default {
               />
               <p class="mt-1 text-xs text-text-secondary">Oldest chats will be removed when this limit is reached</p>
             </div>
-          </div>
+          </div> -->
 
           <!-- Saving & Export -->
           <div class="bg-primary rounded-lg p-4 shadow-lg border border-border-accent">

@@ -96,10 +96,6 @@ export default {
             this.scrollToBottom();
           }
         });
-        
-        if (this.settingsStore.dataSettings.autoSaveChats) {
-          this.saveChatHistory();
-        }
       },
     },
     'settingsStore.uiSettings.codeBlockTheme'() {
@@ -305,6 +301,7 @@ export default {
         this.addCodeBlockActions();
 
         if (this.settingsStore.dataSettings.autoSaveChats) {
+          console.log("Auto-Saving...");
           this.saveChatHistory();
         }
       } catch (error) {
