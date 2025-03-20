@@ -137,11 +137,11 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
       model: options.model,
       messages: options.messages,
       stream: options.stream,
-      temperature: options.parameters?.temperature,
-      top_p: options.parameters?.top_p,
+      temperature: Number(options.parameters?.temperature),
+      top_p: Number(options.parameters?.top_p),
       max_tokens: options.parameters?.max_tokens,
-      presence_penalty: options.parameters?.presence_penalty,
-      frequency_penalty: options.parameters?.frequency_penalty,
+      presence_penalty: Number(options.parameters?.presence_penalty),
+      frequency_penalty: Number(options.parameters?.frequency_penalty),
       stop: options.parameters?.stop
     }),
     transformResponse: (data) => ({
