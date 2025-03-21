@@ -599,6 +599,13 @@ export default {
           <i class="fas fa-file text-xl"></i>
           <span>Open File</span>
         </button>
+        <button 
+          @click="$emit('openProject')" 
+          class="flex items-center justify-center gap-3 py-3 px-4 bg-primary hover:bg-accent rounded-xl transition-colors w-full border border-border-accent shadow-md"
+        >
+          <i class="fas fa-folder text-xl"></i>
+          <span>Open Project</span>
+        </button>
       </div>
 
       <div class="mt-8 px-6 py-5 bg-primary rounded-2xl w-full max-w-md border border-border-accent shadow-lg">

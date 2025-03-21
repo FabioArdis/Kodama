@@ -293,7 +293,23 @@ export class LLMClient {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`API error: ${response.status} - ${errorText}`);
+        
+        let errorMessage = `API error: ${response.status}`;
+        
+        if (errorText) {
+          try {
+            const jsonError = JSON.parse(errorText);
+            if (jsonError.error && jsonError.error.message) {
+              errorMessage += ` - ${jsonError.error.message}`;
+            } else {
+              errorMessage += ` - ${errorText}`;
+            }
+          } catch {
+            errorMessage += ` - ${errorText}`;
+          }
+        }
+        
+        throw new Error(errorMessage);
       }
 
       if (options.stream) {

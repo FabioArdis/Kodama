@@ -9,16 +9,14 @@ import Editor from "./components/Editor.vue";
 import Chat from "./components/Chat.vue";
 import MenuBar from "./components/MenuBar.vue";
 import CommandPalette from "./components/CommandPalette.vue";
-
-import { getVersion } from "@tauri-apps/api/app";
-
-import ollama from 'ollama/browser';
-import { commandRegistry, registerDefaultCommands } from "./utils/commands";
 import ThemeSelector from "./components/ThemeSelector.vue";
 
+import { getVersion } from "@tauri-apps/api/app";
 import { open } from "@tauri-apps/plugin-dialog";
-
 import { getCurrentWindow } from "@tauri-apps/api/window";
+
+import { commandRegistry, registerDefaultCommands } from "./utils/commands";
+
 
 import { useSettingsStore } from "./stores/settings";
 
@@ -74,9 +72,6 @@ export default {
    * Cleans up the Ollama status check interval.
    */
   beforeUnmount() {
-    if (this.ollamaStatusInterval) {
-      clearInterval(this.ollamaStatusInterval);
-    }
     window.removeEventListener('keydown', this.handleKeyDown);
   },
   /**
@@ -215,7 +210,7 @@ export default {
             this.currentFile = {};
           }
           console.log(`Opening file: ${selected}`)
-          this.currentFile.name = selected.split(/[/\\]/).pop();;
+          this.currentFile.name = selected.split(/[/\\]/).pop();
           this.currentFile.path = selected;
           this.$refs.editor.openFile(this.currentFile);console.log("Selected file:", this.currentFile);
         }
@@ -337,6 +332,7 @@ export default {
           'mx-auto': immersiveMode
         }"
         @openFileDialog="handleOpenFileDialog"
+        @openProject="handleOpenProject"
       />
 
       <!-- Chat interface -->

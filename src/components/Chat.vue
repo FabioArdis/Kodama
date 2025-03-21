@@ -309,7 +309,14 @@ export default {
         this.messages.push({
           id: Date.now(),
           sender: "Error",
-          content: `Error: Unable to get response from ${this.settingsStore.llmConnection.selectedProvider}`,
+          content: `<details>
+                      <summary class="flex cursor-pointer items-center gap-2 justify-around text-primary font-medium my-2">
+                      <i class="fas fa-circle-exclamation"></i>
+                        Error: Unable to get response from ${this.settingsStore.llmConnection.selectedProvider}.
+                      <i class="fas fa-expand"></i>
+                      </summary>
+                      <p class="rounded-2xl bg-red-900 p-2">${error}</p>
+                    </details>`,
           timestamp: new Date().toISOString(),
         });
       }

@@ -422,6 +422,7 @@ export default {
             type="text"
             class="w-full bg-accent text-text-primary px-2 py-1 rounded text-sm"
             placeholder="Configuration name"
+            autocomplete="off"
           />
         </div>
         
@@ -448,6 +449,7 @@ export default {
             type="text"
             class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
             placeholder="Command to execute"
+            autocomplete="off"
           />
         </div>
         
@@ -458,6 +460,7 @@ export default {
             type="text"
             class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
             placeholder="Space-separated arguments"
+            autocomplete="off"
           />
         </div>
         
@@ -468,6 +471,7 @@ export default {
             type="text"
             class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
             placeholder="Working directory"
+            autocomplete="off"
           />
           <div class="text-xs text-runpanel-text-secondary mt-1">
             Use ${workspaceFolder} for project root
@@ -500,6 +504,7 @@ export default {
             v-model="newConfig.name"
             type="text"
             class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
+            autocomplete="off"
           />
         </div>
         
@@ -525,6 +530,7 @@ export default {
             v-model="newConfig.command"
             type="text"
             class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
+            autocomplete="off"
           />
         </div>
         
@@ -534,6 +540,7 @@ export default {
             v-model="newConfig.argsString"
             type="text"
             class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
+            autocomplete="off"
           />
         </div>
         
@@ -543,6 +550,7 @@ export default {
             v-model="newConfig.cwd"
             type="text"
             class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
+            autocomplete="off"
           />
           <div class="text-xs text-runpanel-text-secondary mt-1">
             Use ${workspaceFolder} for project root
