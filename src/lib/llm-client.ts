@@ -66,7 +66,7 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     }),
     streamTransform: (data) => ({
       message: {
-        content: data.message?.content || '',
+        content: data.done && data.message?.content === '' ? '' : (data.message?.content || ''),
         role: data.message?.role || 'assistant'
       },
       done: data.done || false
@@ -332,6 +332,8 @@ export class LLMClient {
     const decoder = new TextDecoder();
     let buffer = "";
     
+    const isSSEProvider = this.config.baseUrl.includes('api.groq.com');
+    
     try {
       while (true) {
         const { done, value } = await reader.read();
@@ -349,27 +351,38 @@ export class LLMClient {
         for (const line of lines) {
           if (line.trim() === '') continue;
           
-          // Check for the "data: " prefix and extract the JSON
-          const dataMatch = line.match(/^data: (.+)$/);
-          if (!dataMatch) continue;
+          let jsonStr = line;
           
-          const jsonStr = dataMatch[1];
-          
-          if (jsonStr.trim() === "[DONE]") {
-            yield {
-              message: {
-                content: "",
-                role: "assistant"
-              },
-              done: true
-            };
-            continue;
+          // Check for the "data: " prefix for SSE providers like Groq
+          if (isSSEProvider) {
+            const dataMatch = line.match(/^data: (.+)$/);
+            if (!dataMatch) continue;
+            jsonStr = dataMatch[1];
+            
+            if (jsonStr.trim() === "[DONE]") {
+              yield {
+                message: {
+                  content: "",
+                  role: "assistant"
+                },
+                done: true
+              };
+              continue;
+            }
           }
           
           try {
             const parsedData = JSON.parse(jsonStr);
             const chunk = this.config.streamTransform ? 
               this.config.streamTransform(parsedData) : parsedData;
+            
+            // Skip yielding empty content on done=true for Ollama
+            if (chunk.done && 
+                chunk.message.content === "" && 
+                !isSSEProvider) {
+              // This is the final empty chunk from Ollama, skip yielding it
+              continue;
+            }
             
             yield chunk;
           } catch (e) {
@@ -378,31 +391,43 @@ export class LLMClient {
         }
       }
       
-      // Handle any remaining data in the buffer
+      // Similar handling for any remaining buffer data
       if (buffer.trim()) {
-        const dataMatch = buffer.match(/^data: (.+)$/);
-        if (dataMatch) {
-          const jsonStr = dataMatch[1];
-          
-          if (jsonStr.trim() === "[DONE]") {
-            yield {
-              message: {
-                content: "",
-                role: "assistant"
-              },
-              done: true
-            };
-          } else {
-            try {
-              const parsedData = JSON.parse(jsonStr);
-              const chunk = this.config.streamTransform ? 
-                this.config.streamTransform(parsedData) : parsedData;
-              
-              yield chunk;
-            } catch (e) {
-              console.warn('Error parsing remaining JSON from stream:', e);
+        let jsonStr = buffer;
+        
+        if (isSSEProvider) {
+          const dataMatch = buffer.match(/^data: (.+)$/);
+          if (dataMatch) {
+            jsonStr = dataMatch[1];
+            
+            if (jsonStr.trim() === "[DONE]") {
+              yield {
+                message: {
+                  content: "",
+                  role: "assistant"
+                },
+                done: true
+              };
+              return;
             }
+          } else {
+            return; // No match for SSE format
           }
+        }
+        
+        try {
+          const parsedData = JSON.parse(jsonStr);
+          const chunk = this.config.streamTransform ? 
+            this.config.streamTransform(parsedData) : parsedData;
+          
+          // Skip yielding empty content on done=true for Ollama
+          if (!(chunk.done && 
+              chunk.message.content === "" && 
+              !isSSEProvider)) {
+            yield chunk;
+          }
+        } catch (e) {
+          console.warn('Error parsing remaining JSON from stream:', e);
         }
       }
     } finally {

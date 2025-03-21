@@ -286,9 +286,12 @@ export default {
         const response = await this.llmClient!.chat(options);
 
         for await (const part of response) {
-          messageContent += part.message.content;
-          tokenCount += 1;
-          this.updateMessage(await this.renderMarkdown(messageContent));
+          if (part.message.content) {
+            messageContent += part.message.content;
+            console.info("Received:" + messageContent);
+            tokenCount += 1;
+            this.updateMessage(await this.renderMarkdown(messageContent));
+          }
         }
 
         const timeTaken = ((Date.now() - startTime) / 1000).toFixed(2);
