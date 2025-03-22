@@ -369,6 +369,7 @@ export default {
             :searchInput="searchInput"
             :currentProject="currentProject"
             @updateInput="updateSearchInput"
+            @openFile="openFile"
             @search="search"
           />
 

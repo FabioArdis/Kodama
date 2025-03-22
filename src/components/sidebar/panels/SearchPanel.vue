@@ -246,7 +246,7 @@ export default {
     
     handleOpenFile(result) {
       this.$emit("openFile", {
-        path: `${this.currentProject.path}/${result.filePath}`,
+        path: `${this.currentProject.path}/${result.file_path}`,
         name: result.file_path.split('/').pop(),
         lineNumber: result.matches[0].lineNumber
       });

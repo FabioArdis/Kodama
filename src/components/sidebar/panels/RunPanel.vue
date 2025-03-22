@@ -404,7 +404,7 @@ export default {
         </div>
         <button 
           @click="createConfiguration" 
-          class="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-text-primary rounded text-sm"
+          class="px-2 py-1 bg-primary hover:bg-accent-hover text-text-primary rounded text-sm"
           v-if="!isCreating && !isEditing"
         >
           <i class="fas fa-plus mr-1"></i> New
@@ -648,7 +648,7 @@ export default {
         
         <button 
           @click="runConfiguration" 
-          class="w-full py-1 bg-green-700 hover:bg-green-600 text-text-primary rounded text-sm flex items-center justify-center"
+          class="w-full py-1 bg-green-700 hover:bg-green-600 text-white rounded text-sm flex items-center justify-center"
           :disabled="isRunning"
           :class="{ 'opacity-50 cursor-not-allowed': isRunning }"
         >
