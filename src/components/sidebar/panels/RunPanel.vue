@@ -481,13 +481,13 @@ export default {
         <div class="flex justify-end space-x-2">
           <button 
             @click="cancelCreate" 
-            class="px-2 py-1 bg-accent hover:bg-accent-hover text-text-primaryrimary rounded text-sm"
+            class="px-2 py-1 bg-secondary hover:bg-accent-hover text-text-primary rounded text-sm"
           >
             Cancel
           </button>
           <button 
             @click="addConfiguration" 
-            class="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-text-primaryrimary rounded text-sm"
+            class="px-2 py-1 bg-accent hover:bg-accent-hover text-text-primary rounded text-sm"
           >
             Create
           </button>
@@ -560,13 +560,13 @@ export default {
         <div class="flex justify-end space-x-2">
           <button 
             @click="cancelEdit" 
-            class="px-2 py-1 bg-accent hover:bg-accent-hover text-text-primaryrimary rounded text-sm"
+            class="px-2 py-1 bg-secondary hover:bg-accent-hover text-text-primary rounded text-sm"
           >
             Cancel
           </button>
           <button 
             @click="updateConfiguration" 
-            class="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-text-primaryrimary rounded text-sm"
+            class="px-2 py-1 bg-accent hover:bg-accent-hover text-text-primary rounded text-sm"
           >
             Update
           </button>
@@ -602,7 +602,7 @@ export default {
         <p class="text-runpanel-text-primary mb-2">No run configurations found</p>
         <button 
           @click="createConfiguration" 
-          class="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-text-primaryrimary rounded text-sm"
+          class="px-2 py-1 bg-accent hover:bg-accent-hover text-text-primaryrimary rounded text-sm"
         >
           <i class="fas fa-plus mr-1"></i> Create your first configuration
         </button>
@@ -658,7 +658,7 @@ export default {
       </div>
       
       <!-- Terminal -->
-      <div class="flex-1 bg-terminal-primary rounded overflow-hidden flex flex-col min-h-32 mb-1">
+      <div class="bg-terminal-primary rounded overflow-hidden flex flex-col h-64 mb-1">
         <div class="bg-primary px-2 py-1 text-xs text-runpanel-text-primary flex items-center justify-between">
           <span>Output</span>
           <div v-if="runOutput">
@@ -671,7 +671,7 @@ export default {
             </button>
           </div>
         </div>
-        <div class="flex-1 p-2 overflow-auto font-mono text-xs text-terminal-text-primary whitespace-pre-line">
+        <div class="overflow-auto font-mono text-xs text-terminal-text-primary whitespace-pre-line p-2 h-full">
           {{ runOutput || 'Run a configuration to see output here' }}
         </div>
       </div>
