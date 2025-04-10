@@ -368,311 +368,312 @@ export default {
 </script>
 
 <template>
-  <div class="h-full flex flex-col p-2">
-    <div class="p-1 flex items-center justify-between">
-      <span class="flex items-center">
-        <i class="fas fa-play mr-2"></i>
-        <span>Run Configurations</span>
+  <div class="h-full flex flex-col">
+    <div class="flex items-center justify-between h-8 max-h-8 min-h-8">
+      <span class="flex items-center ml-5 text-xs font-semibold">
+        <span>RUN CONFIGURATIONS</span>
       </span>
     </div>
     
-    <div class="border-t border-border-accent my-1.5"></div>
+    <div class="border-t border-border-accent"></div>
     
-    <!-- No project warning -->
-    <div v-if="!projectReady" class="text-center p-4 text-runpanel-text-primary">
-      <i class="fas fa-folder-open text-2xl mb-2"></i>
-      <p>Open a project to manage run configurations</p>
-    </div>
-    
-    <!-- Loading state -->
-    <div v-else-if="isLoading" class="flex-1 flex items-center justify-center">
-      <i class="fas fa-spinner fa-spin text-blue-400 text-2xl"></i>
-    </div>
-    
-    <!-- Error message -->
-    <div v-else-if="error" class="bg-red-900/50 text-red-200 p-2 rounded mb-2">
-      <i class="fas fa-exclamation-circle mr-1"></i> {{ error }}
-    </div>
-    
-    <!-- Main content when loaded -->
-    <div v-else class="flex-1 flex flex-col h-full">
-      <!-- Configuration list and actions -->
-      <div class="flex justify-between items-center mb-2">
-        <div class="text-sm text-runpanel-text-primary">
-          <span v-if="hasConfigurations">{{ configurations.length }} configuration(s)</span>
-          <span v-else>No configurations</span>
-        </div>
-        <button 
-          @click="createConfiguration" 
-          class="px-2 py-1 bg-primary hover:bg-accent-hover text-text-primary rounded text-sm"
-          v-if="!isCreating && !isEditing"
-        >
-          <i class="fas fa-plus mr-1"></i> New
-        </button>
+    <div class="px-3 py-2">
+      <!-- No project warning -->
+      <div v-if="!projectReady" class="text-center p-4 text-runpanel-text-primary">
+        <i class="fas fa-folder-open text-2xl mb-2"></i>
+        <p>Open a project to manage run configurations</p>
       </div>
       
-      <!-- Configuration creation form -->
-      <div v-if="isCreating" class="bg-primary p-3 rounded mb-3">
-        <h3 class="text-text-primary font-medium mb-2">New Configuration</h3>
-        
-        <div class="mb-2">
-          <label class="block text-sm text-runpanel-text-primary mb-1">Name</label>
-          <input 
-            v-model="newConfig.name"
-            type="text"
-            class="w-full bg-accent text-text-primary px-2 py-1 rounded text-sm"
-            placeholder="Configuration name"
-            autocomplete="off"
-          />
-        </div>
-        
-        <div class="mb-2">
-          <label class="block text-sm text-runpanel-text-primary mb-1">Type</label>
-          <select
-            v-model="newConfig.type"
-            class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
-          >
-            <option 
-              v-for="type in configTypes" 
-              :key="type.value" 
-              :value="type.value"
-            >
-              {{ type.label }}
-            </option>
-          </select>
-        </div>
-        
-        <div class="mb-2">
-          <label class="block text-sm text-runpanel-text-primary mb-1">Command</label>
-          <input 
-            v-model="newConfig.command"
-            type="text"
-            class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
-            placeholder="Command to execute"
-            autocomplete="off"
-          />
-        </div>
-        
-        <div class="mb-2">
-          <label class="block text-sm text-runpanel-text-primary mb-1">Arguments</label>
-          <input 
-            v-model="newConfig.args"
-            type="text"
-            class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
-            placeholder="Space-separated arguments"
-            autocomplete="off"
-          />
-        </div>
-        
-        <div class="mb-3">
-          <label class="block text-sm text-runpanel-text-primary mb-1">Working Directory</label>
-          <input 
-            v-model="newConfig.cwd"
-            type="text"
-            class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
-            placeholder="Working directory"
-            autocomplete="off"
-          />
-          <div class="text-xs text-runpanel-text-secondary mt-1">
-            Use ${workspaceFolder} for project root
-          </div>
-        </div>
-        
-        <div class="flex justify-end space-x-2">
-          <button 
-            @click="cancelCreate" 
-            class="px-2 py-1 bg-secondary hover:bg-accent-hover text-text-primary rounded text-sm"
-          >
-            Cancel
-          </button>
-          <button 
-            @click="addConfiguration" 
-            class="px-2 py-1 bg-accent hover:bg-accent-hover text-text-primary rounded text-sm"
-          >
-            Create
-          </button>
-        </div>
+      <!-- Loading state -->
+      <div v-else-if="isLoading" class="flex-1 flex items-center justify-center">
+        <i class="fas fa-spinner fa-spin text-blue-400 text-2xl"></i>
       </div>
       
-      <!-- Configuration edit form -->
-      <div v-else-if="isEditing" class="bg-primary p-3 rounded mb-3">
-        <h3 class="text-text-primaryrimary font-medium mb-2">Edit Configuration</h3>
-        
-        <div class="mb-2">
-          <label class="block text-sm text-runpanel-text-primary mb-1">Name</label>
-          <input 
-            v-model="newConfig.name"
-            type="text"
-            class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
-            autocomplete="off"
-          />
-        </div>
-        
-        <div class="mb-2">
-          <label class="block text-sm text-runpanel-text-primary mb-1">Type</label>
-          <select
-            v-model="newConfig.type"
-            class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
-          >
-            <option 
-              v-for="type in configTypes" 
-              :key="type.value" 
-              :value="type.value"
-            >
-              {{ type.label }}
-            </option>
-          </select>
-        </div>
-        
-        <div class="mb-2">
-          <label class="block text-sm text-runpanel-text-primary mb-1">Command</label>
-          <input 
-            v-model="newConfig.command"
-            type="text"
-            class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
-            autocomplete="off"
-          />
-        </div>
-        
-        <div class="mb-2">
-          <label class="block text-sm text-runpanel-text-primary mb-1">Arguments</label>
-          <input 
-            v-model="newConfig.argsString"
-            type="text"
-            class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
-            autocomplete="off"
-          />
-        </div>
-        
-        <div class="mb-3">
-          <label class="block text-sm text-runpanel-text-primary mb-1">Working Directory</label>
-          <input 
-            v-model="newConfig.cwd"
-            type="text"
-            class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
-            autocomplete="off"
-          />
-          <div class="text-xs text-runpanel-text-secondary mt-1">
-            Use ${workspaceFolder} for project root
-          </div>
-        </div>
-        
-        <div class="flex justify-end space-x-2">
-          <button 
-            @click="cancelEdit" 
-            class="px-2 py-1 bg-secondary hover:bg-accent-hover text-text-primary rounded text-sm"
-          >
-            Cancel
-          </button>
-          <button 
-            @click="updateConfiguration" 
-            class="px-2 py-1 bg-accent hover:bg-accent-hover text-text-primary rounded text-sm"
-          >
-            Update
-          </button>
-        </div>
+      <!-- Error message -->
+      <div v-else-if="error" class="bg-red-900/50 text-red-200 p-2 rounded mb-2">
+        <i class="fas fa-exclamation-circle mr-1"></i> {{ error }}
       </div>
       
-      <!-- Configuration list -->
-      <div v-else-if="hasConfigurations" class="mb-2 overflow-y-auto max-h-40 bg-accent rounded">
-        <div 
-          v-for="config in configurations" 
-          :key="config.name"
-          @click="selectConfiguration(config)"
-          class="p-2 cursor-pointer border-b border-border-secondary last:border-b-0"
-          :class="{ 'bg-primary': selectedConfig && selectedConfig.name === config.name }"
-        >
-          <div class="flex items-center">
-            <div class="flex-1">
-              <div class="text-text-primaryrimary font-medium text-sm">{{ config.name }}</div>
-              <div class="text-xs text-runpanel-text-primary truncate">
-                {{ config.command }} {{ formatArgs(config.args) }}
-              </div>
-            </div>
-            <div class="text-xs text-runpanel-text-secondary">{{ config.type }}</div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- No configurations message -->
-      <div 
-        v-else-if="!isCreating && !isEditing && !hasConfigurations" 
-        class="mb-4 p-4 bg-primary rounded text-center"
-      >
-        <p class="text-runpanel-text-primary mb-2">No run configurations found</p>
-        <button 
-          @click="createConfiguration" 
-          class="px-2 py-1 bg-accent hover:bg-accent-hover text-text-primaryrimary rounded text-sm"
-        >
-          <i class="fas fa-plus mr-1"></i> Create your first configuration
-        </button>
-      </div>
-      
-      <!-- Configuration details and run controls -->
-      <div 
-        v-if="selectedConfig && !isCreating && !isEditing" 
-        class="bg-primary p-3 rounded mb-2"
-      >
+      <!-- Main content when loaded -->
+      <div v-else class="flex-1 flex flex-col h-full">
+        <!-- Configuration list and actions -->
         <div class="flex justify-between items-center mb-2">
-          <h3 class="text-text-primary font-medium text-sm">{{ selectedConfig.name }}</h3>
-          <div class="flex space-x-1">
-            <button 
-              @click="editConfiguration(selectedConfig)" 
-              class="text-runpanel-text-primary hover:text-text-primary"
-              title="Edit configuration"
-              :disabled="isRunning"
-              :class="{ 'opacity-50 cursor-not-allowed': isRunning }"
+          <div class="text-sm text-runpanel-text-primary">
+            <span v-if="hasConfigurations">{{ configurations.length }} configuration(s)</span>
+            <span v-else>No configurations</span>
+          </div>
+          <button 
+            @click="createConfiguration" 
+            class="px-2 py-1 bg-primary hover:bg-accent-hover text-text-primary rounded text-sm"
+            v-if="!isCreating && !isEditing"
+          >
+            <i class="fas fa-plus mr-1"></i> New
+          </button>
+        </div>
+        
+        <!-- Configuration creation form -->
+        <div v-if="isCreating" class="bg-primary p-3 rounded mb-3">
+          <h3 class="text-text-primary font-medium mb-2">New Configuration</h3>
+          
+          <div class="mb-2">
+            <label class="block text-sm text-runpanel-text-primary mb-1">Name</label>
+            <input 
+              v-model="newConfig.name"
+              type="text"
+              class="w-full bg-accent text-text-primary px-2 py-1 rounded text-sm"
+              placeholder="Configuration name"
+              autocomplete="off"
+            />
+          </div>
+          
+          <div class="mb-2">
+            <label class="block text-sm text-runpanel-text-primary mb-1">Type</label>
+            <select
+              v-model="newConfig.type"
+              class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
             >
-              <i class="fas fa-edit"></i>
+              <option 
+                v-for="type in configTypes" 
+                :key="type.value" 
+                :value="type.value"
+              >
+                {{ type.label }}
+              </option>
+            </select>
+          </div>
+          
+          <div class="mb-2">
+            <label class="block text-sm text-runpanel-text-primary mb-1">Command</label>
+            <input 
+              v-model="newConfig.command"
+              type="text"
+              class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
+              placeholder="Command to execute"
+              autocomplete="off"
+            />
+          </div>
+          
+          <div class="mb-2">
+            <label class="block text-sm text-runpanel-text-primary mb-1">Arguments</label>
+            <input 
+              v-model="newConfig.args"
+              type="text"
+              class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
+              placeholder="Space-separated arguments"
+              autocomplete="off"
+            />
+          </div>
+          
+          <div class="mb-3">
+            <label class="block text-sm text-runpanel-text-primary mb-1">Working Directory</label>
+            <input 
+              v-model="newConfig.cwd"
+              type="text"
+              class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
+              placeholder="Working directory"
+              autocomplete="off"
+            />
+            <div class="text-xs text-runpanel-text-secondary mt-1">
+              Use ${workspaceFolder} for project root
+            </div>
+          </div>
+          
+          <div class="flex justify-end space-x-2">
+            <button 
+              @click="cancelCreate" 
+              class="px-2 py-1 bg-secondary hover:bg-accent-hover text-text-primary rounded text-sm"
+            >
+              Cancel
             </button>
             <button 
-              @click="deleteConfiguration" 
-              class="text-runpanel-text-primary hover:text-red-400"
-              title="Delete configuration"
-              :disabled="isRunning"
-              :class="{ 'opacity-50 cursor-not-allowed': isRunning }"
+              @click="addConfiguration" 
+              class="px-2 py-1 bg-accent hover:bg-accent-hover text-text-primary rounded text-sm"
             >
-              <i class="fas fa-trash"></i>
+              Create
             </button>
           </div>
         </div>
         
-        <div class="text-xs text-text-secondary mb-3">
-          <div class="mb-1"><span class="text-runpanel-text-secondary">Type:</span> {{ selectedConfig.type }}</div>
-          <div class="mb-1">
-            <span class="text-runpanel-text-secondary">Command:</span> 
-            {{ selectedConfig.command }} {{ formatArgs(selectedConfig.args) }}
+        <!-- Configuration edit form -->
+        <div v-else-if="isEditing" class="bg-primary p-3 rounded mb-3">
+          <h3 class="text-text-primaryrimary font-medium mb-2">Edit Configuration</h3>
+          
+          <div class="mb-2">
+            <label class="block text-sm text-runpanel-text-primary mb-1">Name</label>
+            <input 
+              v-model="newConfig.name"
+              type="text"
+              class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
+              autocomplete="off"
+            />
           </div>
-          <div><span class="text-runpanel-text-secondary">Working dir:</span> {{ selectedConfig.cwd }}</div>
+          
+          <div class="mb-2">
+            <label class="block text-sm text-runpanel-text-primary mb-1">Type</label>
+            <select
+              v-model="newConfig.type"
+              class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
+            >
+              <option 
+                v-for="type in configTypes" 
+                :key="type.value" 
+                :value="type.value"
+              >
+                {{ type.label }}
+              </option>
+            </select>
+          </div>
+          
+          <div class="mb-2">
+            <label class="block text-sm text-runpanel-text-primary mb-1">Command</label>
+            <input 
+              v-model="newConfig.command"
+              type="text"
+              class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
+              autocomplete="off"
+            />
+          </div>
+          
+          <div class="mb-2">
+            <label class="block text-sm text-runpanel-text-primary mb-1">Arguments</label>
+            <input 
+              v-model="newConfig.argsString"
+              type="text"
+              class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
+              autocomplete="off"
+            />
+          </div>
+          
+          <div class="mb-3">
+            <label class="block text-sm text-runpanel-text-primary mb-1">Working Directory</label>
+            <input 
+              v-model="newConfig.cwd"
+              type="text"
+              class="w-full bg-accent text-text-primaryrimary px-2 py-1 rounded text-sm"
+              autocomplete="off"
+            />
+            <div class="text-xs text-runpanel-text-secondary mt-1">
+              Use ${workspaceFolder} for project root
+            </div>
+          </div>
+          
+          <div class="flex justify-end space-x-2">
+            <button 
+              @click="cancelEdit" 
+              class="px-2 py-1 bg-secondary hover:bg-accent-hover text-text-primary rounded text-sm"
+            >
+              Cancel
+            </button>
+            <button 
+              @click="updateConfiguration" 
+              class="px-2 py-1 bg-accent hover:bg-accent-hover text-text-primary rounded text-sm"
+            >
+              Update
+            </button>
+          </div>
         </div>
         
-        <button 
-          @click="runConfiguration" 
-          class="w-full py-1 bg-green-700 hover:bg-green-600 text-white rounded text-sm flex items-center justify-center"
-          :disabled="isRunning"
-          :class="{ 'opacity-50 cursor-not-allowed': isRunning }"
+        <!-- Configuration list -->
+        <div v-else-if="hasConfigurations" class="mb-2 overflow-y-auto max-h-40 bg-accent rounded">
+          <div 
+            v-for="config in configurations" 
+            :key="config.name"
+            @click="selectConfiguration(config)"
+            class="p-2 cursor-pointer border-b border-border-secondary last:border-b-0"
+            :class="{ 'bg-primary': selectedConfig && selectedConfig.name === config.name }"
+          >
+            <div class="flex items-center">
+              <div class="flex-1">
+                <div class="text-text-primaryrimary font-medium text-sm">{{ config.name }}</div>
+                <div class="text-xs text-runpanel-text-primary truncate">
+                  {{ config.command }} {{ formatArgs(config.args) }}
+                </div>
+              </div>
+              <div class="text-xs text-runpanel-text-secondary">{{ config.type }}</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- No configurations message -->
+        <div 
+          v-else-if="!isCreating && !isEditing && !hasConfigurations" 
+          class="mb-4 p-4 bg-primary rounded text-center"
         >
-          <i class="fas fa-play mr-1"></i> 
-          {{ isRunning ? 'Running...' : 'Run' }}
-        </button>
-      </div>
-      
-      <!-- Terminal -->
-      <div class="bg-terminal-primary rounded overflow-hidden flex flex-col h-64 mb-1">
-        <div class="bg-primary px-2 py-1 text-xs text-runpanel-text-primary flex items-center justify-between">
-          <span>Output</span>
-          <div v-if="runOutput">
-            <button 
-              class="text-runpanel-text-primary hover:text-text-primary"
-              title="Clear output"
-              @click="runOutput = ''"
-            >
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
+          <p class="text-runpanel-text-primary mb-2">No run configurations found</p>
+          <button 
+            @click="createConfiguration" 
+            class="px-2 py-1 bg-accent hover:bg-accent-hover text-text-primaryrimary rounded text-sm"
+          >
+            <i class="fas fa-plus mr-1"></i> Create your first configuration
+          </button>
         </div>
-        <div class="overflow-auto font-mono text-xs text-terminal-text-primary whitespace-pre-line p-2 h-full">
-          {{ runOutput || 'Run a configuration to see output here' }}
+        
+        <!-- Configuration details and run controls -->
+        <div 
+          v-if="selectedConfig && !isCreating && !isEditing" 
+          class="bg-primary p-3 rounded mb-2"
+        >
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="text-text-primary font-medium text-sm">{{ selectedConfig.name }}</h3>
+            <div class="flex space-x-1">
+              <button 
+                @click="editConfiguration(selectedConfig)" 
+                class="text-runpanel-text-primary hover:text-text-primary"
+                title="Edit configuration"
+                :disabled="isRunning"
+                :class="{ 'opacity-50 cursor-not-allowed': isRunning }"
+              >
+                <i class="fas fa-edit"></i>
+              </button>
+              <button 
+                @click="deleteConfiguration" 
+                class="text-runpanel-text-primary hover:text-red-400"
+                title="Delete configuration"
+                :disabled="isRunning"
+                :class="{ 'opacity-50 cursor-not-allowed': isRunning }"
+              >
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="text-xs text-text-secondary mb-3">
+            <div class="mb-1"><span class="text-runpanel-text-secondary">Type:</span> {{ selectedConfig.type }}</div>
+            <div class="mb-1">
+              <span class="text-runpanel-text-secondary">Command:</span> 
+              {{ selectedConfig.command }} {{ formatArgs(selectedConfig.args) }}
+            </div>
+            <div><span class="text-runpanel-text-secondary">Working dir:</span> {{ selectedConfig.cwd }}</div>
+          </div>
+          
+          <button 
+            @click="runConfiguration" 
+            class="w-full py-1 bg-green-700 hover:bg-green-600 text-white rounded text-sm flex items-center justify-center"
+            :disabled="isRunning"
+            :class="{ 'opacity-50 cursor-not-allowed': isRunning }"
+          >
+            <i class="fas fa-play mr-1"></i> 
+            {{ isRunning ? 'Running...' : 'Run' }}
+          </button>
+        </div>
+        
+        <!-- Terminal -->
+        <div class="bg-terminal-primary rounded overflow-hidden flex flex-col h-64 mb-1">
+          <div class="bg-primary px-2 py-1 text-xs text-runpanel-text-primary flex items-center justify-between">
+            <span>Output</span>
+            <div v-if="runOutput">
+              <button 
+                class="text-runpanel-text-primary hover:text-text-primary"
+                title="Clear output"
+                @click="runOutput = ''"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+          <div class="overflow-auto font-mono text-xs text-terminal-text-primary whitespace-pre-line p-2 h-full">
+            {{ runOutput || 'Run a configuration to see output here' }}
+          </div>
         </div>
       </div>
     </div>

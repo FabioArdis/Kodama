@@ -348,7 +348,7 @@ export default {
         class="left-2 border border-border-accent bg-secondary rounded-4xl overflow-auto custom-scrollbar relative shadow-lg select-none"
         :style="{ width: `${sidebarWidth}px` }"
       >
-        <div class="p-2 rounded-4xl h-full">
+        <div class="rounded-4xl h-full">
           <!-- Explorer Panel -->
           <ExplorerPanel
             v-if="activeMenu === 'explorer'"
@@ -429,7 +429,7 @@ export default {
 }
 
 .custom-scrollbar {
-  scrollbar-width: thin !important;
+  scrollbar-width: none !important;
   scrollbar-color: var(--ide-theme-accent) transparent !important;
 }
 </style>

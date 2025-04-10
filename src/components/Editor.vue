@@ -357,6 +357,8 @@ export default {
         'tsx': 'typescript',
         'cpp': 'cpp',
         'c': 'c',
+        'h': 'c',
+        'hpp': 'cpp',
         'java': 'java',
         'go': 'go',
         'rs': 'rust',
@@ -564,19 +566,35 @@ export default {
 
   <!-- Tabs -->
   <main class="flex-1 relative w-full h-full overflow-hidden flex flex-col rounded-4xl select-none">
-    <div class="bg-secondary p-2 flex items-center h-12">
-      <div v-for="tab in tabs" :key="tab.id" class="mx-1 text-xs px-4 py-2 cursor-pointer" 
-        :class="{ 'bg-accent-hover rounded-xl outline outline-accent shadow-md': activeTab === tab.id }"
+    <div class="flex bg-secondary py-6 p-2 items-center h-12 min-h-12 overflow-y-hidden overflow-x-scroll">
+      <div v-for="tab in tabs" :key="tab.id"
+        class="mx-1 text-xs px-4 py-2 cursor-pointer rounded-xl hover:shadow-md flex items-center max-w-xs"
+        :class="{ 'bg-accent-hover outline outline-accent rounded-xl shadow-md transition-colors duration-500': activeTab === tab.id }"
         @mousedown="handleTabMouseDown($event, tab.id)"
         @click="activeTab = tab.id">
-        <span v-if="tab.unsaved" class="mr-1">●</span>
-        <span>{{ tab.name }}</span>
-        <span class="ml-2 cursor-pointer" @click.stop="closeTab(tab.id)">&times;</span>
+
+        <!-- Flex container: name + close -->
+        <div class="flex items-center gap-2 max-w-full overflow-hidden">
+          <span class="truncate max-w-[10rem]">{{ tab.name }}</span>
+
+          <span class="cursor-pointer w-2 h-3 relative group flex-shrink-0" @click.stop="closeTab(tab.id)">
+            <span v-if="tab.unsaved">
+              <span class="absolute inset-0 flex items-center justify-center transition-opacity duration-150 group-hover:opacity-0">●</span>
+              <span class="absolute inset-0 flex items-center justify-center text-red-500 opacity-0 transition-opacity duration-150 group-hover:opacity-100">&times;</span>
+            </span>
+            <span v-else class="flex items-center justify-center w-full h-full hover:text-red-500">&times;</span>
+          </span>
+        </div>
       </div>
+
+      
+      <!--
       <button @click="addTab()" class="ml-2 text-xs px-2 py-1 rounded-4xl bg-primary hover:bg-accent transition-colors border border-border-accent">
         <span>+</span>
       </button>
+      -->
     </div>
+    
     <div class="border-t border-border-accent"></div>
 
     <!-- Welcome Screen -->

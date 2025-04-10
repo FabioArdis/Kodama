@@ -34,7 +34,12 @@ export default {
       
       <div class="text-center mb-8">
         <div class="text-xl font-light mb-2 text-text-accent flex items-center justify-center gap-10">
-          <img src="/images/kodama-logo.svg" alt="Kōdama Logo" class="rounded-xl mb-5 h-48 w-48 shadow-2xl" />
+          <div class="relative mb-5">
+            <div class="absolute -inset-1 rounded-lg bg-gradient-to-r from-[#3B6567] via-green-950 to-neutral-900 opacity-75 blur"></div>
+            <div class="relative">
+              <img src="/images/kodama-logo.svg" alt="Kōdama Logo" class="rounded-xl h-48 w-48" />
+            </div>
+          </div>
 
           <div class="bg-primary rounded-xl p-5 mb-6 border border-border-accent shadow-md">
             <h1 class="p-3 text-3xl">コーダマ - <span class="italic font-light text-text-primary">Kōdama</span></h1>
