@@ -1,70 +1,106 @@
-# Kōdama - コーダマ
+![Kōdama Logo](public/images/kodama-preview.png)
 
-Kōdama is a Tauri-based IDE with a Vue frontend, featuring an AI system powered by Ollama.
+# Kōdama - Modern IDE with Integrated AI Assistant
 
----
+Kōdama is an Integrated Development Environment (IDE) built with modern web technologies, featuring seamless integration of Large Language Models (LLMs) as intelligent assistants. It prioritizes developer control and privacy by offering robust support for local LLM inference alongside cloud-based options. Kōdama combines a flexible web-based UI with the performance of native code for backend operations, creating a powerful and responsive development tool.
 
-## Prerequisites
+## Key Features
 
-Before setting up the project, ensure you have the following installed:
+* **Modern Code Editing:** Powered by Monaco Editor for a professional editing experience with features like syntax highlighting, IntelliSense, and more.
+* **Integrated AI Assistant:** Interact with LLMs directly within the IDE via a chat interface. Use it for code explanation, generation, refactoring, debugging, and other development tasks.
+* **Flexible LLM Integration:**
+    * Supports **local inference** via providers like Ollama and KoboldCPP, allowing you to run models offline for maximum privacy and control.
+    * Supports **cloud-based inference** via providers like Groq for access to powerful models.
+    * Highly configurable model parameters: Temperature, Max Tokens, Top-p/Top-k sampling, Repetition/Presence/Frequency penalties, and custom Stop Sequences.
+* **Cross-Platform:** Built using Tauri, Kōdama runs as a native desktop application on Windows, macOS, and Linux.
+* **IDE Functionalities:**
+    * **File Explorer:** Navigate and manage your project files and directories.
+    * **Search:** Perform fast, project-wide searches with options for case sensitivity, whole words, regular expressions, and inclusion of ignored files.
+    * **Run Configurations:** Define, save, and execute custom commands, scripts, or build tasks directly from the IDE.
+    * **Command Palette:** Access commands and features quickly using a searchable palette (default: `Ctrl+Shift+P`).
+    * **Customizable Theming:** Choose from various built-in themes or add your own to personalize the look and feel.
+    * **Detailed Settings:** Fine-tune the editor, AI integration, UI, and data handling preferences.
 
-- [**Node.js**](https://nodejs.org/) (LTS version recommended)
-- [**pnpm**](https://pnpm.io/) (preferred package manager, install via `npm i -g pnpm`)
-- [**Rust**](https://www.rust-lang.org/) (latest stable version, install via [rustup](https://rustup.rs/))
-- [**Tauri CLI**](https://tauri.app/) (install via `cargo install tauri-cli`)
-- [**Ollama**](https://ollama.ai/) (for AI chatbot functionality, install via their website)
+## Technologies Used
 
----
+* **Frontend:**
+    * [Vue.js](https://vuejs.org/)
+    * [TypeScript](https://www.typescriptlang.org/)
+    * [Vite](https://vitejs.dev/)
+    * [Monaco Editor](https://microsoft.github.io/monaco-editor/)
+    * [Tailwind CSS](https://tailwindcss.com/)
+    * [Pinia](https://pinia.vuejs.org/) (State Management)
+    * [marked](https://marked.js.org/) (Markdown Rendering)
+    * [highlight.js](https://highlightjs.org/) (Syntax Highlighting)
+* **Backend & Desktop Framework:**
+    * [Tauri](https://v2.tauri.app/)
+    * [Rust](https://www.rust-lang.org)
+    * Rayon (Rust Parallelism Library)
+    * walkdir / ignore (Rust Directory Traversal Libraries)
+* **AI/LLM Integration:**
+    * Custom `LLMClient` Interface (supports various providers)
+    * [Ollama](https://ollama.com/)
+    * [KoboldCPP](https://github.com/LostRuins/koboldcpp/)
+    * [Groq](https://groq.com/)
 
-## Installation
+## Getting Started
 
-Clone the repository and install dependencies:
+### Prerequisites
 
-```sh
-# Clone the repository
-git clone https://github.com/FabioArdis/kodama.git
-cd kodama
+* Node.js (LTS recommended) & npm / yarn / pnpm
+* Rust & Cargo (Follow the official Rust installation guide: [https://www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install))
+* **Optional:** For local AI features, install and run an LLM provider like [Ollama](https://ollama.com/) or [KoboldCPP](https://github.com/LostRuins/koboldcpp/).
+* **Optional:** For cloud AI features, obtain an API Key from your chosen provider (e.g., Groq).
 
-# Install dependencies
-pnpm install
-```
+### Installation & Running
 
----
+1.  **Clone the repository:**
+    ```bash
+    git clone clone https://github.com/FabioArdis/Kodama.git
+    cd kodama
+    ```
+2.  **Install frontend dependencies:**
+    ```bash
+    pnpm install
+    ```
+3.  **Run in development mode:**
+    ```bash
+    pnpm tauri dev
+    ```
+    This will build and launch the application with hot-reloading enabled for the frontend.
 
-## Running in Development Mode
+4.  **Build for production:**
+    ```bash
+    pnpm run tauri build
+    ```
+    The distributable application package will be located in `src-tauri/target/release/bundle/`.
 
-### 1 - Start the Ollama server (ensure it's running in the background)
+### Platform-Specific Setup
 
-```sh
-ollama serve
-```
+When using Ollama on Windows with Kōdama, you need to set an environment variable to allow communication between the applications. Create a new environment variable named `OLLAMA_API_URL` and set its value to `http://tauri.localhost`.
+This step is not necessary on macOS or Linux, as the application can communicate with the Ollama server directly.
 
-### 2 - Run the development server
+### Configuration
 
-```sh
-pnpm dev
-```
+* Configure LLM providers (Base URL, API Key), select models, and adjust generation parameters within the application's **Settings** menu.
+* Select your preferred UI theme via the **Theme Selector** in Settings.
+* Manage Run Configurations via the **Run** panel in the sidebar after a project is loaded.
 
-This will start Kōdama in a browser environment with live reloading.
+## Future Roadmap
 
-### 2a - Run the full app (for native testing)
+* **Plugin System:** Develop an API and infrastructure for third-party plugins to extend functionality.
+* **Enhanced AI Integration:** Integrate AI assistance more deeply, potentially into the Command Palette or for automated Run Configuration setup.
+* **Version Control:** Implement built-in Git support for managing repositories directly within Kōdama.
 
-```sh
-pnpm tauri dev
-```
+## Contributing
 
-This will build and launch Kōdama.
+Contributions are welcome! If you have suggestions, bug reports, or feature requests, please open an issue or submit a pull request. For larger changes, consider discussing your ideas in an issue first.
 
----
+### Special acknowledgments
+- [Carmine Dodaro](https://github.com/dodaro) - My thesis supervisor, for his unwavering support and for believing in me and this project.
+- [Burak Tutkun](https://github.com/RShadowhand/) - For showing me the beauty of Vue.js and Tauri, and for his invaluable help in the early stages of this project.
+- [FirStorm9](https://github.com/FirStorm9) - For converting me to the dark side of Rust and for testing the application on ArchLinux.
 
-## Building for Production
+## License
 
-To create a production build of Kōdama:
-
-```sh
-pnpm tauri build
-```
-
-This will generate a native build of Kōdama in the `src-tauri/target/release` folder.
-
----
+This project is licensed under the MIT License - see the `LICENSE` file for details.
